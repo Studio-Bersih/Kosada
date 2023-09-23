@@ -47,7 +47,7 @@
 <Header />
 <div class="container mx-auto">
 
-    <div class="card w-full bg-base-100 shadow-xl">
+    <div class="card w-full bg-base-100 shadow-xl my-5">
         <div class="card-body">
             <h2 class="card-title">Penambahan Member Baru</h2>
 
