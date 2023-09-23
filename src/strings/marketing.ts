@@ -1,0 +1,17 @@
+export const marketing = [
+    'TGL 25',
+    '28 IM',
+    '28 AM',
+    'BCA 1',
+    'BCA 2',
+    'MAN 1',
+    'MAN 2',
+    'SAB/BRI',
+    'CIMB',
+    'MJK',
+    'YAKULT',
+    'OPPO',
+    'U.LOKA',
+    'BNI',
+    'JATIM',
+];

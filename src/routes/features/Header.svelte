@@ -19,7 +19,7 @@
     <div class="navbar-center hidden lg:flex">
       <ul class="menu menu-horizontal px-1">
         <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="/">Tambah Anggota</a></li>
+        <li><a href="/tambah-member">Tambah Anggota</a></li>
         <li><a href="/">Tambah Kredit</a></li>
         <li><a href="/member">Anggota Koperasi</a></li>
       </ul>
