@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { baseConfiguration } from "$lib/baseConfig";
     import { rupiahFormatter } from "$lib/formatter";
     import Header from "../features/Header.svelte";
 
@@ -6,6 +7,16 @@
     let newData:any             = data.data;
     let staticData:any          = newData;
     let currentCategory:string  = 'SEMUA';
+
+    let isModal:boolean     = false;
+
+    async function showModal(ID:number){
+        isModal = true;
+        const doGet = await fetch(baseConfiguration.defaultURL + 'Detail-Kredit/' + ID);
+        const doResponse = await doGet.json();
+        console.log(doResponse.data);
+
+    }
 
     function changeCategory(ID:string){
         newData             = staticData;
@@ -70,7 +81,7 @@
                                 <td>{ rupiahFormatter.format(data.JUMLAH_PENGAJUAN) }</td>
                                 <td>{data.KETERANGAN == null ? '-' : data.KETERANGAN}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-accent rounded-full">Detail</button>
+                                    <button type="button" on:click={() => showModal(data.ID)} class="btn btn-sm btn-accent rounded-full">Detail</button>
                                 </td>
                             </tr>
                         {/each}
@@ -80,4 +91,10 @@
 
         </div>
     </div>
+</div>
+<!-- Open the modal using ID.showModal() method -->
+<div class="modal" class:modal-open={isModal}>
+    <form method="dialog" class="modal-box max-w-none w-1/2">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isModal = false }>✕</button>
+    </form>
 </div>

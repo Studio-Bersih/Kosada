@@ -24,7 +24,7 @@
 
     $: bungaJasa = timePeriod * 5/100;
     $: totalAngsuran = (jumlahPengajuan + (jumlahPengajuan * bungaJasa)) / timePeriod;
-    $: totalAmount = Number(totalAngsuran) - Number(biayaAdmin);
+    $: totalAmount = ( Number(totalAngsuran) * timePeriod ) - biayaAdmin;
 
     const startInterval = setInterval(() => {
         time = new Date();
