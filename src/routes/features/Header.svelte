@@ -22,6 +22,8 @@
         <li><a href="/tambah-member">Tambah Anggota</a></li>
         <li><a href="/tambah-kredit">Tambah Kredit</a></li>
         <li><a href="/member">Anggota Koperasi</a></li>
+        <li><a href="/surat-tugas">Surat Tugas</a></li>
+        <li><a href="/report">Laporan</a></li>
       </ul>
     </div>
     <div class="navbar-end">
