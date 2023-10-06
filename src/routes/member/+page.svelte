@@ -1,9 +1,28 @@
 <script lang="ts">
+    import toast, { Toaster } from 'svelte-french-toast';
+    import { baseConfiguration } from "$lib/baseConfig";
     import Header from "../features/Header.svelte";
     export let data;
     let newData:any = data.data;
     let currentCategory:string  = 'SEMUA';
     let staticData:any          = newData;
+
+    let isModal:boolean     = false;
+    let isDelete:boolean    = false;
+
+    let id:number;
+    let nama:string;
+    let alamat:string;
+    let kota:string;
+    let provinsi:string;
+    let whatsApp:number;
+    let nomorKTP:number;
+    let pinATM:number;
+    let jenisKelamin:string;
+    let dataMarketing:string;
+    let pekerjaan:string;
+    let rekomendasiDari:string;
+    let keterangan:string;
 
     function changeCategory(ID:string){
         newData             = staticData;
@@ -15,15 +34,76 @@
         newData = newData;
         return newData
     }
+
+    function doEdit(ID:number){
+        isModal = true
+        id              = newData[ID].ID;
+        nama            = newData[ID].NAMA;
+        alamat          = newData[ID].ALAMAT;
+        kota            = newData[ID].KOTA;
+        provinsi        = newData[ID].PROVINSI;
+        whatsApp        = newData[ID].HP;
+        nomorKTP        = newData[ID].KTP;
+        pinATM          = newData[ID].PIN_ATM;
+        jenisKelamin    = newData[ID].GENDER;
+        dataMarketing   = newData[ID].MARKETING;
+        pekerjaan       = newData[ID].PEKERJAAN;
+        rekomendasiDari = newData[ID].REKOMENDASI;
+        keterangan      = newData[ID].KETERANGAN;
+    }
+
+    function doDelete(ID:number){
+        isDelete = true;
+        id = newData[ID].ID;
+    }
+
+    async function doErase(){
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Member',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            credentials : 'include',
+            body : JSON.stringify({
+                ID : id
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+    }
+
+    async function doUpdate(){
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Member',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            credentials : 'include',
+            body : JSON.stringify({
+                ID          : id,
+                NAMA        : nama,
+                ALAMAT      : alamat,
+                KOTA        : kota,
+                PROVINSI    : provinsi,
+                WHATSAPP    : whatsApp,
+                KTP         : nomorKTP,
+                PIN         : pinATM,
+                GENDER      : jenisKelamin,
+                MARKETING   : dataMarketing,
+                PEKERJAAN   : pekerjaan,
+                REKOMENDASI : rekomendasiDari,
+                KETERANGAN  : keterangan
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+    }
 </script>
+<Toaster />
 <Header/>
 <div class="container mx-auto">
 
-    <div class="flex justify-between ...">
+    <div class="flex justify-between my-5">
         <h2 class="card-title">Member Koperasi Kosada</h2>
         <select bind:value={currentCategory} on:change={() => changeCategory(currentCategory)} class="select select-info max-w-xs">
             <option selected disabled>Pilih Data Marketing</option>
-            <option value="SEMUA">Tampilkan Semua Data</option>
+            <option value="SEMUA">Tampilkan Semua Member</option>
             <option value="TGL 25">TGL 25</option>
             <option value="28 IM">28 IM</option>
             <option value="28 AM">28 AM</option>
@@ -78,8 +158,8 @@
                                 <td>{data.MARKETING}</td>
                                 <td>
                                     <div class="flex">
-                                        <button type="button" class="btn me-2">Edit</button>
-                                        <button type="button" class="btn me-2">Hapus</button>
+                                        <button type="button" on:click={() => doEdit(index)} class="btn btn-accent me-2">Edit</button>
+                                        <button type="button" on:click={() => doDelete(index)} class="btn btn-secondary me-2">Hapus</button>
                                     </div>
                                 </td>
                             </tr>
@@ -89,4 +169,128 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal" class:modal-open={isModal}>
+    <form method="dialog" class="modal-box max-w-none w-1/2">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isModal = false }>✕</button>
+        <h2 class="font-bold">Ubah Data Member</h2>
+        <form on:submit={doUpdate} class="grid grid-cols-2 place-items-center gap-2 my-5">
+            <div class="form-control w-full max-w-md">
+                <label for="inputName" class="label">
+                    <span class="label-text">Nama</span>
+                </label>
+                <input type="text" bind:value={nama} placeholder="Masukkan Nama" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputAlamat" class="label">
+                    <span class="label-text">Alamat</span>
+                </label>
+                <input type="text" bind:value={alamat} placeholder="Masukkan Alamat" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputKota" class="label">
+                    <span class="label-text">Kota</span>
+                </label>
+                <input type="text" bind:value={kota} placeholder="Masukkan Kota" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputProvinsi" class="label">
+                    <span class="label-text">Provinsi</span>
+                </label>
+                <select bind:value={provinsi} class="select select-bordered w-full max-w-md" required>
+                    <option disabled selected>Pilih Provinsi</option>
+                    {#each data.provinsi as provinsi }
+                        <option value="{provinsi}">{provinsi}</option>
+                    {/each}
+                </select>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputHP" class="label">
+                    <span class="label-text">WhatsApp</span>
+                </label>
+                <input type="number" bind:value={whatsApp} placeholder="Masukkan Telepon" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputKTP" class="label">
+                    <span class="label-text">No KTP</span>
+                </label>
+                <input type="number" bind:value={nomorKTP} placeholder="Masukkan KTP" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputATM" class="label">
+                    <span class="label-text">No PIN ATM</span>
+                </label>
+                <input type="number" bind:value={pinATM} placeholder="Masukkan PIN" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputGender" class="label">
+                    <span class="label-text">Jenis Kelamin</span>
+                </label>
+                <select bind:value={jenisKelamin} class="select select-bordered w-full max-w-md" required>
+                    <option disabled selected>Pilih Jenis Kelamin</option>
+                    <option value="Pria">Pria</option>
+                    <option value="Wanita">Wanita</option>
+                </select>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputMarketing" class="label">
+                    <span class="label-text">Data Marketing</span>
+                </label>
+                <select bind:value={dataMarketing} class="select select-bordered w-full max-w-md" required>
+                    <option disabled selected>Pilih Data Marketing</option>
+                    {#each data.marketing as marketing }
+                        <option value="{marketing}">{marketing}</option>
+                    {/each}
+                </select>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputPekerjaan" class="label">
+                    <span class="label-text">Pekerjaan</span>
+                </label>
+                <input type="text" bind:value={pekerjaan} placeholder="Masukkan Pekerjaan" class="input input-bordered w-full max-w-md" required/>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputRekomendasi" class="label">
+                    <span class="label-text">Rekomendasi Dari</span>
+                </label>
+                <input type="text" bind:value={rekomendasiDari} placeholder="Nama Perekomendasi" class="input input-bordered w-full max-w-md" />
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="inputKeterangan" class="label">
+                    <span class="label-text">Keterangan</span>
+                </label>
+                <textarea bind:value={keterangan} class="textarea textarea-bordered h-24" placeholder="Keterangan" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success w-full">Update Data</button>
+
+        </form>
+    </form>
+</div>
+
+<!-- Delete?? -->
+<div class="modal" class:modal-open={isDelete}>
+    <form method="dialog" class="modal-box max-w-none w-1/2">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isDelete = false }>✕</button>
+
+        <h2 class="card-title">Peringatan!</h2>
+        <p>Member akan dihapus!</p>
+        <div class="card-actions justify-end">
+            <button on:click={doErase} class="btn btn-secondary">Ya, Hapus</button>
+            <button on:click={ () => isDelete = false } class="btn btn-ghost">Batalkan</button>
+        </div>
+
+    </form>
 </div>

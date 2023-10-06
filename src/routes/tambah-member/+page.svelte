@@ -41,7 +41,6 @@
         const doResponse = await doPost.json();
         return doResponse == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
-
 </script>
 <Toaster />
 <Header />
@@ -52,7 +51,6 @@
             <h2 class="card-title">Penambahan Member Baru</h2>
 
             <form on:submit|preventDefault={doPost}>
-            
                 <div class="grid grid-cols-2 place-items-center gap-2 my-5">
                     <div class="form-control w-full max-w-md">
                         <label for="inputName" class="label">
