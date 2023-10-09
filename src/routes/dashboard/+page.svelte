@@ -41,16 +41,6 @@
         // Udah fix, tinggal async aja
         console.log(ID,status);
     }
-
-    async function hapusPinjaman(ID:string){
-        console.log(ID);
-    }
-
-    async function lunasiPinjaman(ID:string){
-        console.log(ID);
-    }
-
-
 </script>
 <Toaster />
 <Header />
@@ -119,8 +109,6 @@
 <div class="modal" class:modal-open={isModal}>
     <form method="dialog" class="modal-box max-w-none w-1/2">
         <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isModal = false }>✕</button>
-        <button type="button" on:click={() => hapusPinjaman(modalData.NO_KREDIT)} class="btn btn-secondary my-2 ms-2">Hapus Data Kredit</button>
-        <button type="button" on:click={() => lunasiPinjaman(modalData.NO_KREDIT)} class="btn btn-info my-2 ms-2">Lunasi Pinjaman</button>
         <a href="/dashboard/report/{modalData.ID}" target="_blank" class="btn btn-primary my-2 ms-2">Cetak Halaman Pinjaman</a>
         <div class="divider"></div>
 

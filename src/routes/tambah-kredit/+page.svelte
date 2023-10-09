@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { baseConfiguration } from "$lib/baseConfig";
     import { rupiahFormatter } from "$lib/formatter";
     import Header from "../features/Header.svelte";
     import toast, { Toaster } from 'svelte-french-toast';
@@ -20,7 +21,9 @@
     let currentID:number;
     let currentAddress:string   = '-';
     let currentMarketing:string = '-';
+    let jatuhTempo:Date;
     let biayaAdmin:number;
+    let keterangan:string;
 
     $: bungaJasa = timePeriod * 5/100;
     $: totalAngsuran = (jumlahPengajuan + (jumlahPengajuan * bungaJasa)) / timePeriod;
@@ -36,7 +39,25 @@
     }
 
     async function doPost(){
-        // 
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kredit',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            // credentials : 'include',
+            body : JSON.stringify({
+                JUMLAH_PENGAJUAN : jumlahPengajuan,
+                ID : newData[currentID].ID,
+                NO_KREDIT : uniqueID,
+                MARKETING : currentMarketing,
+                JANGKA_WAKTU : timePeriod,
+                ANGSURAN : totalAngsuran,
+                JATUH_TEMPO : jatuhTempo,
+                BIAYA_ADMIN : biayaAdmin,
+                KETERANGAN : keterangan
+            })
+        });
+        const doResponse = await doPost.json();
+        console.log(doResponse)
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
 <Toaster/>
@@ -126,21 +147,21 @@
                         <label for="inputJatuhTempo" class="label">
                             <span class="label-text">Jatuh Tempo</span>
                         </label>
-                        <input type="date" class="input input-bordered w-full max-w-lg"/>
+                        <input type="date" bind:value={jatuhTempo} class="input input-bordered w-full max-w-lg" required/>
                     </div>
 
                     <div class="form-control w-full max-w-lg">
                         <label for="inputBiayaAdmin" class="label">
                             <span class="label-text">Biaya Admin</span>
                         </label>
-                        <input type="number" bind:value={biayaAdmin} placeholder="Rp. 0,00-" class="input input-bordered w-full max-w-lg"/>
+                        <input type="number" bind:value={biayaAdmin} placeholder="Rp. 0,00-" class="input input-bordered w-full max-w-lg" required/>
                     </div>
 
                     <div class="form-control w-full max-w-lg">
                         <label for="inputKeterangan" class="label">
                             <span class="label-text">Keterangan</span>
                         </label>
-                        <textarea class="textarea textarea-bordered h-24" placeholder="Misal: Tambah jaminan BPKB" required></textarea>
+                        <textarea bind:value={keterangan} class="textarea textarea-bordered h-24" placeholder="Misal: Tambah jaminan BPKB" required></textarea>
                     </div>                    
 
                     <div class="alert alert-info w-96">
@@ -148,9 +169,7 @@
                         <span>Total yang dibayarkan : <span class="text-white">{ Number.isNaN(totalAmount) ? '-' : rupiahFormatter.format(totalAmount) }</span></span>
                     </div>
     
-                    <button type="button" class="btn btn-accent w-96 my-5">Simpan Data Kredit</button>
-
-
+                    <button type="submit" class="btn btn-accent w-96 my-5">Simpan Data Kredit</button>
                 </div>
                 
 

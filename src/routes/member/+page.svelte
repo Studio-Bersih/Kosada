@@ -61,13 +61,14 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
+            // credentials : 'include',
             body : JSON.stringify({
                 ID : id
             })
         });
         const doResponse = await doPost.json();
-        return doResponse == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+        console.log(doResponse);
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 
     async function doUpdate(){
@@ -92,7 +93,7 @@
             })
         });
         const doResponse = await doPost.json();
-        return doResponse == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
 <Toaster />
