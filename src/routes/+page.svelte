@@ -1,3 +1,25 @@
+<script lang="ts">
+    import toast, { Toaster } from 'svelte-french-toast';
+    import { baseConfiguration } from "$lib/baseConfig";
+
+    let email:string;
+    let password:string;
+
+    async function doPost(){
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Log-In',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            credentials : 'include',
+            body : JSON.stringify({
+                EMAIL : email,
+                PASSWORD : password
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+    }
+</script>
+<Toaster/>
 <div class="bg-no-repeat bg-cover bg-center relative" style="background-image: url('/loginScreen.jpg');">
     <div class="absolute bg-gradient-to-b from-green-500 to-green-400 opacity-75 inset-0 z-0" />
     <div class="min-h-screen sm:flex sm:flex-row mx-0 justify-center">

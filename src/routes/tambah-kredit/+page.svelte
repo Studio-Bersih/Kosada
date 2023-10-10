@@ -56,7 +56,6 @@
             })
         });
         const doResponse = await doPost.json();
-        console.log(doResponse)
         return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>

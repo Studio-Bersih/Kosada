@@ -17,7 +17,6 @@
         const doGet = await fetch(baseConfiguration.defaultURL + 'Detail-Kredit/' + ID);
         const doResponse = await doGet.json();
         modalData = doResponse.data;
-        console.log(modalData)
     }
 
     function changeCategory(ID:string){
@@ -32,14 +31,31 @@
     }
     
     async function changeKasbon(ID:number,amount:number){
-        let kasbonAmount = amount as unknown as HTMLInputElement;
-        console.log(ID,Number(kasbonAmount.value));
-        // Udah fix, tinggal async aja
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kasbon',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            // credentials : 'include',
+            body : JSON.stringify({
+                ID : ID,
+                AMOUNT : amount
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 
     async function changeLunas(ID:number,status:string){
-        // Udah fix, tinggal async aja
-        console.log(ID,status);
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Status-Lunas',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            // credentials : 'include',
+            body : JSON.stringify({
+                ID : ID,
+                STATUS : status
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
 <Toaster />
@@ -110,6 +126,8 @@
     <form method="dialog" class="modal-box max-w-none w-1/2">
         <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isModal = false }>✕</button>
         <a href="/dashboard/report/{modalData.ID}" target="_blank" class="btn btn-primary my-2 ms-2">Cetak Halaman Pinjaman</a>
+
+        <h1 class="mt-5">Kasbon Belum Lunas: { rupiahFormatter.format(modalData.KASBON_BELUM_LUNAS) }</h1>
         <div class="divider"></div>
 
         <div id="modalContent" class="grid grid-cols-2 place-items-center gap-2 my-5">
@@ -154,7 +172,7 @@
                                 </td>
                                 <td>{rupiahFormatter.format(detail.NOMINAL)}</td>
                                 <td>{detail.JATUH_TEMPO}</td>
-                                <td><input type="number" bind:this="{detail.KASBON}" on:blur={() => changeKasbon(detail.ID,detail.KASBON)} placeholder="Kasbon" class="input input-bordered w-full max-w-md"/></td>
+                                <td><input type="number" bind:value="{detail.KASBON}" on:blur={() => changeKasbon(detail.ID,detail.KASBON)} placeholder="Kasbon" class="input input-bordered w-full max-w-md"/></td>
                                 <td>
                                     <select bind:value={detail.LUNAS} on:change={() => changeLunas(detail.ID,detail.LUNAS)} class="select select-bordered w-full max-w-md" required>
                                         <option value="Sudah">Sudah Lunas</option>

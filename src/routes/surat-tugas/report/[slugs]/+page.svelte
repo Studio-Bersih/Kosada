@@ -1,7 +1,6 @@
 <script lang="ts">
     export let data;
     let newData:any = data.data;
-    console.log(newData)
 </script>
 
 <div class="container mx-auto">
