@@ -3,7 +3,7 @@
     export let data;
     let newData:any = data.data;
 </script>
-<div class="container mx-auto my-10">
+<div class="container mx-auto">
     <div class="card w-full bg-base-100 shadow-xl">
         <div class="card-body">
 
@@ -11,7 +11,7 @@
                 <button type="button" on:click={() => window.print()} class="btn btn-neutral w-48 my-2 ms-2 no-print">Cetak Halaman Ini</button>
             </div>
             
-            <div class="grid grid-cols-2 place-items-center gap-2 my-5">
+            <div class="grid grid-cols-2 place-items-center gap-2">
                 <img src="/logo.png" alt="Logo Koperasi Kosada" class="h-48" />
                 <div>
                     <h3 class="text-center">KOSADA</h3>
@@ -23,7 +23,7 @@
 
             <div class="divider my-5"></div>
 
-            <div class="grid grid-cols-2 place-items-center gap-2 my-5">
+            <div class="grid grid-cols-2 place-items-center gap-2">
                 <div class="form-control w-full max-w-md">
                     <label for="inputName" class="label">
                         <span class="label-text">Nama Nasabah</span>

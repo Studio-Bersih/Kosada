@@ -61,13 +61,17 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            // credentials : 'include',
+            credentials : 'include',
             body : JSON.stringify({
                 ID : id
             })
         });
         const doResponse = await doPost.json();
-        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+        doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+        let index:number = newData.findIndex((element: { ID: number; }) => element.ID === id);
+        newData.splice(index,1);
+        newData = newData;
+        return newData;
     }
 
     async function doUpdate(){

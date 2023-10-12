@@ -15,7 +15,7 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Surat-Tugas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            // credentials : 'include',
+            credentials : 'include',
             body : JSON.stringify({
                 NOMOR_SURAT : nomorSurat,
                 LAMP        : lampiranSurat,
@@ -66,7 +66,6 @@
                                 <td>{ data.PERIHAL }</td>
                                 <td>
                                     <a href="/surat-tugas/report/{data.ID}" class="btn btn-info">Lihat</a>
-                                    <button type="button" class="btn btn-secondary ms-2">Hapus</button>
                                 </td>
                             </tr>
                         {/each}

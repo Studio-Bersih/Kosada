@@ -1,21 +1,28 @@
 <script lang="ts">
     import toast, { Toaster } from 'svelte-french-toast';
     import { baseConfiguration } from "$lib/baseConfig";
+    import { goto } from '$app/navigation';
 
     let email:string;
     let password:string;
 
     async function doPost(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Log-In',{
+        let URL:string = baseConfiguration.defaultURL;
+        const doPost = await fetch(URL.replace('Kosada/',"") + 'Log-In',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             credentials : 'include',
             body : JSON.stringify({
-                EMAIL : email,
-                PASSWORD : password
+                email : email,
+                password : password
             })
         });
         const doResponse = await doPost.json();
+        
+        if(doResponse.status == 'Authenticated'){
+            return goto('/dashboard');
+        }
+        
         return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
@@ -40,19 +47,19 @@
                     </h3>
                     <p class="text-gray-500">Please sign in to your account.</p>
                 </div>
-                <div class="space-y-5">
+                <form on:submit|preventDefault={doPost} class="space-y-5">
                     <div class="space-y-2">
                         <label for="inputEmail" class="text-sm font-medium text-gray-700 tracking-wide" >Email</label >
-                        <input class=" w-full text-base px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-400" type="" placeholder="mail@gmail.com" />
+                        <input class=" w-full text-base px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-400 bg-white" type="email" bind:value={email} placeholder="Email Kosada" required/>
                     </div>
                     <div class="space-y-2">
                         <label for="inputPassword" class="mb-5 text-sm font-medium text-gray-700 tracking-wide" >Password</label>
-                        <input class="w-full content-center text-base px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-400" type="" placeholder="Enter your password"/>
+                        <input class="w-full content-center text-base px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-400 bg-white" type="password" bind:value={password} placeholder="Masukkan Password" required/>
                     </div>
                     <div>
-                        <button type="submit" class="w-full flex justify-center bg-green-400 hover:bg-green-500 text-gray-100 p-3 rounded-full tracking-wide font-semibold shadow-lg cursor-pointer transition ease-in duration-500" >Sign in</button>
+                        <button type="submit" class="w-full flex justify-center bg-green-400 hover:bg-green-500 text-gray-100 p-3 rounded-full tracking-wide font-semibold shadow-lg cursor-pointer transition ease-in duration-500" >Masuk</button>
                     </div>
-                </div>
+                </form>
                 <div class="pt-5 text-center text-gray-400 text-xs">
                     <span>
                         Copyright Kosada © { new Date().getFullYear() }<br/>

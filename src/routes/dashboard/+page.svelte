@@ -14,7 +14,10 @@
 
     async function showModal(ID:number){
         isModal = true;
-        const doGet = await fetch(baseConfiguration.defaultURL + 'Detail-Kredit/' + ID);
+        const doGet = await fetch(baseConfiguration.defaultURL + 'Detail-Kredit/' + ID,{
+            method: 'GET',
+            credentials : 'include'
+        });
         const doResponse = await doGet.json();
         modalData = doResponse.data;
     }
@@ -27,14 +30,14 @@
             newData = staticData;
         }
         newData = newData;
-        return newData
+        return newData;
     }
     
     async function changeKasbon(ID:number,amount:number){
         const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kasbon',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            // credentials : 'include',
+            credentials : 'include',
             body : JSON.stringify({
                 ID : ID,
                 AMOUNT : amount
@@ -48,7 +51,7 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Status-Lunas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            // credentials : 'include',
+            credentials : 'include',
             body : JSON.stringify({
                 ID : ID,
                 STATUS : status
