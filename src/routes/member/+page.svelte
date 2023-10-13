@@ -15,8 +15,8 @@
     let alamat:string;
     let kota:string;
     let provinsi:string;
-    let whatsApp:number;
-    let nomorKTP:number;
+    let whatsApp:string;
+    let nomorKTP:string;
     let pinATM:number;
     let jenisKelamin:string;
     let dataMarketing:string;
