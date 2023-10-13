@@ -15,8 +15,8 @@
     let alamat:string;
     let kota:string;
     let provinsi:string;
-    let whatsApp:string;
-    let nomorKTP:string;
+    let whatsApp:number;
+    let nomorKTP:number;
     let pinATM:number;
     let jenisKelamin:string;
     let dataMarketing:string;
@@ -85,8 +85,8 @@
                 ALAMAT      : alamat,
                 KOTA        : kota,
                 PROVINSI    : provinsi,
-                WHATSAPP    : whatsApp,
-                KTP         : nomorKTP,
+                WHATSAPP    : Number(whatsApp),
+                KTP         : Number(nomorKTP),
                 PIN         : pinATM,
                 GENDER      : jenisKelamin,
                 MARKETING   : dataMarketing,
@@ -217,14 +217,14 @@
                 <label for="inputHP" class="label">
                     <span class="label-text">WhatsApp</span>
                 </label>
-                <input type="number" bind:value={whatsApp} placeholder="Masukkan Telepon" class="input input-bordered w-full max-w-md" required/>
+                <input type="text" bind:value={whatsApp} placeholder="Masukkan Telepon" class="input input-bordered w-full max-w-md" required/>
             </div>
 
             <div class="form-control w-full max-w-md">
                 <label for="inputKTP" class="label">
                     <span class="label-text">No KTP</span>
                 </label>
-                <input type="number" bind:value={nomorKTP} placeholder="Masukkan KTP" class="input input-bordered w-full max-w-md" required/>
+                <input type="text" bind:value={nomorKTP} placeholder="Masukkan KTP" class="input input-bordered w-full max-w-md" required/>
             </div>
 
             <div class="form-control w-full max-w-md">
