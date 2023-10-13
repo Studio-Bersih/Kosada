@@ -75,7 +75,7 @@
     }
 
     async function doUpdate(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Member',{
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Update-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             credentials : 'include',
@@ -85,8 +85,8 @@
                 ALAMAT      : alamat,
                 KOTA        : kota,
                 PROVINSI    : provinsi,
-                WHATSAPP    : Number(whatsApp),
-                KTP         : Number(nomorKTP),
+                WHATSAPP    : whatsApp,
+                KTP         : nomorKTP,
                 PIN         : pinATM,
                 GENDER      : jenisKelamin,
                 MARKETING   : dataMarketing,
