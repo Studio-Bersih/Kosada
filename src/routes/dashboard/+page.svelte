@@ -32,6 +32,20 @@
         newData = newData;
         return newData;
     }
+
+    async function changeMarketing(ID:number,status:string){
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Ubah-Marketing',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            credentials : 'include',
+            body : JSON.stringify({
+                ID : ID,
+                STATUS : status
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+    }
     
     async function changeKasbon(ID:number,amount:number){
         const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kasbon',{
@@ -147,7 +161,42 @@
                 </label>
                 <input type="text" value="{modalData.ALAMAT}" placeholder="Masukkan Alamat" class="input input-bordered w-full max-w-md" disabled/>
             </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="ubahMarketing" class="label">
+                    <span class="label-text">Ubah Data Marketing</span>
+                </label>
+                <select bind:value={modalData.MARKETING} on:change={() => changeMarketing(modalData.ID,modalData.MARKETING)} class="select select-info max-w-xs">
+                    <option selected disabled>Pilih Data Marketing</option>
+                    <option value="SEMUA">Tampilkan Semua Data</option>
+                    <option value="TGL 25">TGL 25</option>
+                    <option value="28 IM">28 IM</option>
+                    <option value="28 AM">28 AM</option>
+                    <option value="BCA 1">BCA 1</option>
+                    <option value="BCA 2">BCA 2</option>
+                    <option value="MAN 1">MAN 1</option>
+                    <option value="MAN 2">MAN 2</option>
+                    <option value="SAB/BRI">SAB/BRI</option>
+                    <option value="CIMB">CIMB</option>
+                    <option value="MJK">MJK</option>
+                    <option value="YAKULT">YAKULT</option>
+                    <option value="OPPO">OPPO</option>
+                    <option value="U.LOKA">U.LOKA</option>
+                    <option value="BNI">BNI</option>
+                    <option value="JATIM">JATIM</option>
+                </select>
+            </div>
+
+            <div class="form-control w-full max-w-md">
+                <label for="keteranganPinjaman" class="label">
+                    <span class="label-text">Keterangan</span>
+                </label>
+                <textarea class="textarea textarea-bordered h-24" placeholder="Keterangan" readonly>{modalData.KETERANGAN}</textarea>
+            </div>
+
         </div>
+
+
 
         <div class="overflow-auto">
             <table class="table">

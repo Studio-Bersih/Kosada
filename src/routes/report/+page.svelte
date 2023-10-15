@@ -86,7 +86,7 @@
                             <th>#</th>
                             <th>Nama</th>
                             <th>Kasbon</th>
-                            <th>Pinjaman</th>
+                            <th>Angsuran</th>
                             <th>Progress Cicilan</th>
                             <th>Tanggal Pinjaman</th>
                         </tr>

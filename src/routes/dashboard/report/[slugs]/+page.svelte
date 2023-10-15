@@ -74,6 +74,13 @@
                 </table>
             </div>
 
+            <div class="form-control">
+                <label for="keteranganPinjaman" class="label">
+                    <span class="label-text">Keterangan</span>
+                </label>
+                <textarea class="textarea textarea-bordered h-24" placeholder="Keterangan" readonly>{newData.KETERANGAN}</textarea>
+            </div>
+
             <div class="grid grid-cols-2 place-items-center gap-2 my-10">
                 <h1>Kreditur</h1>
                 <h1>Koperasi</h1>
