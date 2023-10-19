@@ -25,7 +25,7 @@
     let biayaAdmin:number;
     let keterangan:string;
 
-    $: bungaJasa = timePeriod * 4/100;
+    $: bungaJasa = timePeriod * 5/100;
     $: totalAngsuran = (jumlahPengajuan + (jumlahPengajuan * bungaJasa)) / timePeriod;
     $: totalAmount = ( Number(totalAngsuran) * timePeriod ) - biayaAdmin;
 

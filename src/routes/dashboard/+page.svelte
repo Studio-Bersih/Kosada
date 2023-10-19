@@ -5,12 +5,16 @@
     import Header from "../features/Header.svelte";
 
     export let data;
+
     let newData:any             = data.data;
     let staticData:any          = newData;
     let currentCategory:string  = 'SEMUA';
 
     let isModal:boolean         = false;
+    let isDelete:boolean        = false;
     let modalData:any           = [];
+
+    let id:number;
 
     async function showModal(ID:number){
         isModal = true;
@@ -74,6 +78,30 @@
         const doResponse = await doPost.json();
         return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
+
+    function doDelete(ID:number){
+        isDelete = true;
+        id = ID;
+        return id;
+    }
+
+    async function doErase(){
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Kredit',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            credentials : 'include',
+            body : JSON.stringify({
+                ID : id
+            })
+        });
+        const doResponse = await doPost.json();
+        doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+        let index:number = newData.findIndex((element: { ID: number; }) => element.ID === id);
+        newData.splice(index,1);
+        newData = newData;
+        isModal = false;
+        return newData;
+    }
 </script>
 <Toaster />
 <Header />
@@ -115,6 +143,7 @@
                             <th>Nominal Pengajuan</th>
                             <th>Keterangan</th>
                             <th>Detail</th>
+                            <th>Hapus Kredit</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -128,6 +157,9 @@
                                 <td>{data.KETERANGAN == null ? '-' : data.KETERANGAN}</td>
                                 <td>
                                     <button type="button" on:click={() => showModal(data.ID)} class="btn btn-sm btn-accent rounded-full">Detail</button>
+                                </td>
+                                <td>
+                                    <button type="button" on:click={() => doDelete(data.ID)} class="btn btn-sm btn-secondary">Hapus Kredit</button>
                                 </td>
                             </tr>
                         {/each}
@@ -196,8 +228,6 @@
 
         </div>
 
-
-
         <div class="overflow-auto">
             <table class="table">
                 <thead class="font-bold">
@@ -236,6 +266,18 @@
                     {/if}
                 </tbody>
             </table>
+        </div>
+    </form>
+</div>
+<!-- Delete?? -->
+<div class="modal" class:modal-open={isDelete}>
+    <form method="dialog" class="modal-box">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isDelete = false }>✕</button>
+        <h2 class="card-title">Peringatan!</h2>
+        <p>Kredit akan dihapus!</p>
+        <div class="card-actions justify-end">
+            <button type="button" on:click={doErase} class="btn btn-secondary">Ya, Hapus</button>
+            <button type="button" on:click={() => isDelete = false} class="btn btn-ghost">Batalkan</button>
         </div>
     </form>
 </div>
