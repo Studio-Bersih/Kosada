@@ -102,6 +102,20 @@
         isModal = false;
         return newData;
     }
+
+    async function setLunas(ID:number,STATUS:string){
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Kredit-Lunas',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            credentials : 'include',
+            body : JSON.stringify({
+                ID : ID,
+                STATUS : STATUS
+            })
+        });
+        const doResponse = await doPost.json();
+        return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
+    }
 </script>
 <Toaster />
 <Header />
@@ -144,6 +158,7 @@
                             <th>Keterangan</th>
                             <th>Detail</th>
                             <th>Hapus Kredit</th>
+                            <th>Set Lunas</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -160,6 +175,12 @@
                                 </td>
                                 <td>
                                     <button type="button" on:click={() => doDelete(data.ID)} class="btn btn-sm btn-secondary">Hapus Kredit</button>
+                                </td>
+                                <td>
+                                    <select bind:value={data.LUNAS} on:change={() => setLunas(data.ID,data.LUNAS)} class="select select-bordered w-full max-w-md">
+                                        <option value="Yes">Belum Lunas</option>
+                                        <option value="No">Sudah Lunas</option>
+                                    </select>
                                 </td>
                             </tr>
                         {/each}
