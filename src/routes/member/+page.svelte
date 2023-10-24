@@ -206,7 +206,7 @@
                     <span class="label-text">Provinsi</span>
                 </label>
                 <select bind:value={provinsi} class="select select-bordered w-full max-w-md" required>
-                    <option disabled selected>Pilih Provinsi</option>
+                    <option disabled>Pilih Provinsi</option>
                     {#each data.provinsi as provinsi }
                         <option value="{provinsi}">{provinsi}</option>
                     {/each}
