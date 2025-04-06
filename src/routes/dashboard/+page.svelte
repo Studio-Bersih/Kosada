@@ -1,20 +1,49 @@
 <script lang="ts">
-    import toast, { Toaster } from 'svelte-french-toast';
-    import { baseConfiguration } from "$lib/baseConfig";
-    import { rupiahFormatter } from "$lib/formatter";
     import Header from "../features/Header.svelte";
+    import { initializeDate, rupiahFormatter } from "$lib/formatter";
+    import { baseConfiguration } from "$lib/baseConfig";
+    import toast, { Toaster } from 'svelte-french-toast';
+    import { onMount } from "svelte";
 
-    export let data;
+    // export let data;
 
-    let newData:any             = data.data;
+    let newData:any             = [];
     let staticData:any          = newData;
     let currentCategory:string  = 'SEMUA';
+
+    type Form = Record<"start" | "end", string>;
+    let useDate: Form = {
+        start: initializeDate("first"),
+        end: initializeDate("last")
+    }
+
+    let isLoading: boolean = false;
 
     let isModal:boolean         = false;
     let isDelete:boolean        = false;
     let modalData:any           = [];
 
     let id:number;
+
+    async function doPost(): Promise <void>{
+        isLoading = true;
+        const doPost = await fetch(baseConfiguration.defaultURL + 'Realisasi-Kredit-Range', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                start: useDate.start,
+                end: useDate.end,
+                kategori: currentCategory
+            })
+        });
+
+        isLoading = false;
+
+        const doResponse = await doPost.json();
+        newData = doResponse;
+        newData = newData;
+    } 
 
     async function showModal(ID:number){
         isModal = true;
@@ -24,17 +53,6 @@
         });
         const doResponse = await doGet.json();
         modalData = doResponse.data;
-    }
-
-    function changeCategory(ID:string){
-        newData             = staticData;
-        const dataFilter    = newData.filter((kategoriData:any) => kategoriData.MARKETING == ID );
-        newData             = dataFilter
-        if(ID == 'SEMUA'){
-            newData = staticData;
-        }
-        newData = newData;
-        return newData;
     }
 
     async function changeMarketing(ID:number,status:string){
@@ -123,28 +141,59 @@
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
             
-            <div class="flex justify-between ...">
-                <h2 class="card-title">Realisasi Kredit</h2>
-                <select bind:value={currentCategory} on:change={() => changeCategory(currentCategory)} class="select select-info max-w-xs">
-                    <option selected disabled>Pilih Data Marketing</option>
-                    <option value="SEMUA">Tampilkan Semua Data</option>
-                    <option value="TGL 25">TGL 25</option>
-                    <option value="28 IM">28 IM</option>
-                    <option value="28 AM">28 AM</option>
-                    <option value="BCA 1">BCA 1</option>
-                    <option value="BCA 2">BCA 2</option>
-                    <option value="MAN 1">MAN 1</option>
-                    <option value="MAN 2">MAN 2</option>
-                    <option value="SAB/BRI">SAB/BRI</option>
-                    <option value="CIMB">CIMB</option>
-                    <option value="MJK">MJK</option>
-                    <option value="YAKULT">YAKULT</option>
-                    <option value="OPPO">OPPO</option>
-                    <option value="U.LOKA">U.LOKA</option>
-                    <option value="BNI">BNI</option>
-                    <option value="JATIM">JATIM</option>
-                </select>
-              </div>
+            <form on:submit={doPost} class="flex justify-between">
+                <div class="form-control w-full max-w-md">
+                    <label for="pilihKategori" class="label">
+                        <span class="label-text">Pilih Kategori</span>
+                    </label>
+                    <select bind:value={currentCategory} class="select select-info max-w-xs">
+                        <option selected disabled>Pilih Data Marketing</option>
+                        <option value="SEMUA">Tampilkan Semua Data</option>
+                        <option value="TGL 25">TGL 25</option>
+                        <option value="28 IM">28 IM</option>
+                        <option value="28 AM">28 AM</option>
+                        <option value="BCA 1">BCA 1</option>
+                        <option value="BCA 2">BCA 2</option>
+                        <option value="MAN 1">MAN 1</option>
+                        <option value="MAN 2">MAN 2</option>
+                        <option value="SAB/BRI">SAB/BRI</option>
+                        <option value="CIMB">CIMB</option>
+                        <option value="MJK">MJK</option>
+                        <option value="YAKULT">YAKULT</option>
+                        <option value="OPPO">OPPO</option>
+                        <option value="U.LOKA">U.LOKA</option>
+                        <option value="BNI">BNI</option>
+                        <option value="JATIM">JATIM</option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full max-w-md">
+                    <label for="startDate" class="label">
+                        <span class="label-text">Tanggal Mulai Pinjaman</span>
+                    </label>
+                    <input type="date" bind:value={useDate.start} class="input"/>
+                </div>
+
+                <div class="form-control w-full max-w-md">
+                    <label for="end" class="label">
+                        <span class="label-text">Tanggal Akhir Pinjaman</span>
+                    </label>
+                    <input type="date" bind:value={useDate.end} class="input"/>
+                </div>
+
+                <div class="form-control w-full max-w-md">
+                    <label for="end" class="label">
+                        <span class="label-text">Pencarian</span>
+                    </label>
+                    <button type="submit" class="btn btn-primary" disabled={isLoading}>
+                        {#if isLoading}
+                            <span class="loading loading-spinner loading-sm"></span> Mencari..
+                        {:else}
+                            <span>Mulai Pencarian</span>
+                        {/if}
+                    </button>
+                </div>
+            </form>
 
             <div class="overflow-x-auto my-5">
                 <table class="table">
@@ -162,6 +211,11 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {#if newData.length === 0}
+                            <tr>
+                                <td colspan=9 class="text-center">Tidak ada data.</td>
+                            </tr>
+                        {/if}
                         {#each newData as data,index }
                             <tr class="hover">
                                 <td>{index + 1}</td>
