@@ -16,12 +16,12 @@ function initializeDate(type: "first" | "last" | "current"): string {
     const now: Date = new Date();
 
     if (type === "last") {
-        const lastDate: Date = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const lastDate: Date = new Date(now.getFullYear(), 11, 31);
         return useFormat(lastDate);
     }
 
     if (type === "first") {
-        const firstDate: Date = new Date(now.getFullYear(), now.getMonth(), 1);
+        const firstDate: Date = new Date(now.getFullYear(), 0, 1);
         return useFormat(firstDate);
     }
 

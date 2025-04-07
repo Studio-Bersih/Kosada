@@ -25,6 +25,8 @@
 
     let id:number;
 
+    onMount(() => doPost());
+
     async function doPost(): Promise <void>{
         isLoading = true;
         const doPost = await fetch(baseConfiguration.defaultURL + 'Realisasi-Kredit-Range', {
