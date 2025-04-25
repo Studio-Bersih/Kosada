@@ -11,7 +11,6 @@
         const doPost = await fetch(URL.replace('Kosada/',"UD84/") + 'Auth',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 email : email,
                 password : password

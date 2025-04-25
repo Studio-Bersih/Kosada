@@ -15,7 +15,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Surat-Tugas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 NOMOR_SURAT : nomorSurat,
                 LAMP        : lampiranSurat,

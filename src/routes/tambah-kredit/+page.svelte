@@ -42,7 +42,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kredit',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 JUMLAH_PENGAJUAN : jumlahPengajuan,
                 ID : newData[currentID].ID,

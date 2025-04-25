@@ -32,7 +32,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Realisasi-Kredit-Range', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({
                 start: useDate.start,
                 end: useDate.end,
@@ -51,7 +50,6 @@
         isModal = true;
         const doGet = await fetch(baseConfiguration.defaultURL + 'Detail-Kredit/' + ID,{
             method: 'GET',
-            credentials : 'include'
         });
         const doResponse = await doGet.json();
         modalData = doResponse.data;
@@ -61,7 +59,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Ubah-Marketing',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID : ID,
                 STATUS : status
@@ -75,7 +72,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kasbon',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID : ID,
                 AMOUNT : amount
@@ -89,7 +85,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Status-Lunas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID : ID,
                 STATUS : status
@@ -109,7 +104,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Kredit',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID : id
             })
@@ -127,7 +121,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Kredit-Lunas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID : ID,
                 STATUS : STATUS

@@ -61,7 +61,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID : id
             })
@@ -78,7 +77,6 @@
         const doPost = await fetch(baseConfiguration.defaultURL + 'Update-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
-            credentials : 'include',
             body : JSON.stringify({
                 ID          : id,
                 NAMA        : nama,
