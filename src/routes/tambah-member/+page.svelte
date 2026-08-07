@@ -19,7 +19,7 @@
     let keterangan:string;
 
     async function doPost(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Member',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Tambah-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
