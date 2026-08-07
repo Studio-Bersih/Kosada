@@ -7,7 +7,7 @@
     let password:string;
 
     async function doPost(){
-        let URL:string = baseConfiguration.defaultURL;
+        let URL:string = baseConfiguration.clientURL;
         const doPost = await fetch(URL.replace('Kosada/',"UD84/") + 'Auth',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },

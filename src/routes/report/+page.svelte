@@ -11,7 +11,7 @@
     let dataMarketing:string;
 
     const getReport = async () => {
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Report',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Report',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({

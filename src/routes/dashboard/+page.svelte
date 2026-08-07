@@ -29,7 +29,7 @@
 
     async function doPost(): Promise <void>{
         isLoading = true;
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Realisasi-Kredit-Range', {
+        const doPost = await fetch(baseConfiguration.clientURL + 'Realisasi-Kredit-Range', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -48,7 +48,7 @@
 
     async function showModal(ID:number){
         isModal = true;
-        const doGet = await fetch(baseConfiguration.defaultURL + 'Detail-Kredit/' + ID,{
+        const doGet = await fetch(baseConfiguration.clientURL + 'Detail-Kredit/' + ID,{
             method: 'GET',
         });
         const doResponse = await doGet.json();
@@ -56,7 +56,7 @@
     }
 
     async function changeMarketing(ID:number,status:string){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Ubah-Marketing',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Ubah-Marketing',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
@@ -69,7 +69,7 @@
     }
     
     async function changeKasbon(ID:number,amount:number){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kasbon',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Tambah-Kasbon',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
@@ -82,7 +82,7 @@
     }
 
     async function changeLunas(ID:number,status:string){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Status-Lunas',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Status-Lunas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
@@ -101,7 +101,7 @@
     }
 
     async function doErase(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Kredit',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Hapus-Kredit',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
@@ -118,7 +118,7 @@
     }
 
     async function setLunas(ID:number,STATUS:string){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Kredit-Lunas',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Kredit-Lunas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({

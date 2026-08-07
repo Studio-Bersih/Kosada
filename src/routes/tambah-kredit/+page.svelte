@@ -39,7 +39,7 @@
     }
 
     async function doPost(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Tambah-Kredit',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Tambah-Kredit',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({

@@ -58,7 +58,7 @@
     }
 
     async function doErase(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Hapus-Member',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Hapus-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
@@ -74,7 +74,7 @@
     }
 
     async function doUpdate(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Update-Member',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Update-Member',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({

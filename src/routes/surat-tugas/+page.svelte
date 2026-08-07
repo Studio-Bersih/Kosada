@@ -12,7 +12,7 @@
     let isiSurat:string;
 
     async function doPost(){
-        const doPost = await fetch(baseConfiguration.defaultURL + 'Surat-Tugas',{
+        const doPost = await fetch(baseConfiguration.clientURL + 'Surat-Tugas',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
