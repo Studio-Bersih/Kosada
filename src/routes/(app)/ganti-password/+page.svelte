@@ -1,4 +1,6 @@
 <script lang="ts">
+    import PageHeader from "$lib/PageHeader.svelte";
+    import Panel from "$lib/Panel.svelte";
     import { onMount } from 'svelte';
     import toast from '$lib/toast';
     import { baseConfiguration } from '$lib/baseConfig';
@@ -61,10 +63,12 @@
         isSaving = false;
     }
 </script>
-<div class="container mx-auto">
-    <div class="card w-full max-w-2xl mx-auto bg-base-100 shadow-xl my-10">
-        <div class="card-body">
-            <h2 class="card-title">Ganti Password</h2>
+<svelte:head><title>Ganti Password — Kosada</title></svelte:head>
+
+<PageHeader title="Ganti Password" description="Ubah password akun Kosada" />
+
+<div class="px-4 lg:px-8 py-5">
+    <Panel>
 
             <div class="alert alert-warning mt-2">
                 <span>
@@ -120,6 +124,5 @@
                     {/if}
                 </button>
             </form>
-        </div>
-    </div>
+    </Panel>
 </div>

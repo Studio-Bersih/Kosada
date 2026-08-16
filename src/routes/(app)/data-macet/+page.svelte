@@ -5,6 +5,9 @@
     import { rupiahFormatter } from '$lib/formatter';
     import MarketingSelect from '$lib/MarketingSelect.svelte';
     import { normalizeList } from '$lib/apiList';
+    import PageHeader from '$lib/PageHeader.svelte';
+    import Panel from '$lib/Panel.svelte';
+    import Icon from '$lib/Icon.svelte';
 
     let rows:any = [];
     let meta:any = { page : 1, per_page : 25, total : 0, last_page : 1 };
@@ -101,48 +104,55 @@
 
     $: totalTagihan = rows.reduce((s:number, r:any) => s + Number(r.TOTAL_TAGIHAN ?? 0), 0);
 </script>
-<div class="container mx-auto">
-    <div class="card w-full bg-base-100 shadow-xl my-10">
-        <div class="card-body">
-            <h2 class="card-title">Data Kredit Macet</h2>
-            <p class="text-sm opacity-70">
-                Satu baris per pinjaman. Nominal dihitung langsung dari data angsuran,
-                jadi angkanya ikut berkurang kalau nasabah membayar.
-            </p>
+<svelte:head><title>Data Macet — Kosada</title></svelte:head>
 
-            <form on:submit|preventDefault={applyFilters} class="flex flex-wrap gap-2 items-end mt-4">
-                <div class="form-control">
-                    <label for="cariNama" class="label"><span class="label-text">Cari Nama</span></label>
-                    <input id="cariNama" type="search" bind:value={form.nama}
-                        placeholder="Ketik nama, lalu tekan Cari" class="input input-bordered max-w-xs"/>
-                </div>
+<PageHeader
+    title="Data Kredit Macet"
+    description="Satu baris per pinjaman · nominal dihitung langsung dari data angsuran">
+    <svelte:fragment slot="meta">
+        {#if meta.total > 0}
+            <span aria-hidden="true">·</span>
+            <span><strong class="text-base-content">{meta.total.toLocaleString('id-ID')}</strong> kasus</span>
+        {/if}
+    </svelte:fragment>
 
-                <div class="form-control">
-                    <label for="pilihMarketing" class="label"><span class="label-text">Data Marketing</span></label>
-                    <MarketingSelect bind:value={form.marketing} includeSemua />
-                </div>
+    <svelte:fragment slot="actions">
+        <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
+            <Icon name="print" size={16} /> Cetak
+        </a>
+    </svelte:fragment>
 
-                <div class="form-control">
-                    <label for="pilihStatus" class="label"><span class="label-text">Status</span></label>
-                    <select id="pilihStatus" bind:value={form.status} class="select select-info max-w-xs">
-                        <option value="Macet">Masih Macet</option>
-                        <option value="Selesai">Sudah Selesai</option>
-                        <option value="SEMUA">Semua</option>
-                    </select>
-                </div>
+    <svelte:fragment slot="toolbar">
+        <form on:submit|preventDefault={applyFilters}
+              class="px-4 lg:px-8 pb-3 flex flex-wrap items-center gap-2">
+            <label class="input input-bordered input-sm flex items-center gap-2 grow max-w-xs">
+                <Icon name="search" size={16} />
+                <input id="cariNama" type="search" bind:value={form.nama}
+                       placeholder="Cari nama nasabah" class="grow min-w-0"/>
+            </label>
 
-                <button type="submit" class="btn btn-primary" disabled={isLoading}>
-                    {#if isLoading}
-                        <span class="loading loading-spinner loading-sm"></span> Mencari..
-                    {:else}
-                        Cari
-                    {/if}
-                </button>
+            <MarketingSelect bind:value={form.marketing} includeSemua class="select select-bordered select-sm" />
 
-                <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary">Cetak Data Macet</a>
-            </form>
+            <select id="pilihStatus" bind:value={form.status} class="select select-bordered select-sm">
+                <option value="Macet">Masih Macet</option>
+                <option value="Selesai">Sudah Selesai</option>
+                <option value="SEMUA">Semua Status</option>
+            </select>
 
-            <div class="overflow-x-auto mt-6 max-h-[70vh]">
+            <button type="submit" class="btn btn-primary btn-sm" disabled={isLoading}>
+                {#if isLoading}
+                    <span class="loading loading-spinner loading-xs"></span> Mencari..
+                {:else}
+                    Cari
+                {/if}
+            </button>
+        </form>
+    </svelte:fragment>
+</PageHeader>
+
+<div class="px-4 lg:px-8 py-5">
+    <Panel flush>
+            <div class="overflow-x-auto max-h-[70vh]">
                 <table class="table-kosada">
                     <thead>
                         <tr>
@@ -217,9 +227,9 @@
                 </table>
             </div>
 
-            <div class="flex justify-between items-center mt-4">
-                <span class="text-sm opacity-70">
-                    {meta.total} data · halaman {meta.page} dari {meta.last_page}
+            <div class="flex justify-between items-center border-t border-base-300 px-4 py-3">
+                <span class="text-sm text-muted">
+                    {meta.total.toLocaleString('id-ID')} data · halaman {meta.page} dari {meta.last_page}
                 </span>
                 <div class="join">
                     <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1} on:click={() => gotoPage(meta.page - 1)}>«</button>
@@ -227,8 +237,7 @@
                     <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page} on:click={() => gotoPage(meta.page + 1)}>»</button>
                 </div>
             </div>
-        </div>
-    </div>
+    </Panel>
 </div>
 
 <!-- Resolve a case. The record is kept, never deleted. -->

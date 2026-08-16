@@ -4,6 +4,9 @@
     import { baseConfiguration } from '$lib/baseConfig';
     import { rupiahFormatter } from '$lib/formatter';
     import MemberSearch from '$lib/MemberSearch.svelte';
+    import PageHeader from '$lib/PageHeader.svelte';
+    import Panel from '$lib/Panel.svelte';
+    import Icon from '$lib/Icon.svelte';
 
     const JENIS = ['Kasbon','Top Up','Pinjaman Baru'];
 
@@ -135,24 +138,30 @@
     $: printHref = '/transfer-harian/print?tanggal=' + tanggal;
     $: adaTerlambat = rows.some((r:any) => r.TERLAMBAT);
 </script>
-<div class="container mx-auto">
-    <div class="card w-full bg-base-100 shadow-xl my-10">
-        <div class="card-body">
+<svelte:head><title>Transfer Harian — Kosada</title></svelte:head>
 
-            <!-- The date sits above the table, centered and outside the columns. -->
-            <div class="text-center">
-                <h2 class="text-xl font-bold">Data Transfer Harian</h2>
-                <div class="flex justify-center items-center gap-2 mt-2">
-                    <input type="date" bind:value={tanggal} on:change={load} class="input input-bordered w-auto"/>
-                    <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">Cetak</a>
-                </div>
-            </div>
+<PageHeader title="Data Transfer Harian" description="Rekap nasabah yang perlu ditransfer">
+    <svelte:fragment slot="meta">
+        {#if meta.total > 0}
+            <span aria-hidden="true">·</span>
+            <span><strong class="text-base-content">{meta.total}</strong> transfer</span>
+        {/if}
+    </svelte:fragment>
 
-            <div class="divider"></div>
+    <svelte:fragment slot="actions">
+        <!-- The date drives the whole page, so it belongs beside the title
+             rather than buried in the form below it. -->
+        <input type="date" bind:value={tanggal} on:change={load}
+               class="input input-bordered input-sm w-auto" aria-label="Tanggal transfer"/>
+        <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
+            <Icon name="print" size={16} /> Cetak
+        </a>
+    </svelte:fragment>
+</PageHeader>
 
-            <!-- Entry form -->
-            <div class="bg-base-200 rounded-box p-4">
-                <h3 class="font-bold mb-3">Tambah Data Transfer</h3>
+<div class="px-4 lg:px-8 py-5 space-y-5">
+    <Panel>
+                <h3 class="font-semibold mb-3">Tambah Data Transfer</h3>
                 <div class="grid gap-3 md:grid-cols-3">
 
                     <div class="form-control">
@@ -210,26 +219,26 @@
                 </div>
 
                 <div class="flex justify-end gap-2 mt-4">
-                    <button type="button" class="btn btn-ghost" on:click={resetForm}>Bersihkan</button>
-                    <button type="button" class="btn btn-primary" on:click={simpan} disabled={isSaving}>
+                    <button type="button" class="btn btn-ghost btn-sm" on:click={resetForm}>Bersihkan</button>
+                    <button type="button" class="btn btn-primary btn-sm" on:click={simpan} disabled={isSaving}>
                         {#if isSaving}
-                            <span class="loading loading-spinner loading-sm"></span> Menyimpan..
+                            <span class="loading loading-spinner loading-xs"></span> Menyimpan..
                         {:else}
                             Simpan
                         {/if}
                     </button>
                 </div>
-            </div>
+    </Panel>
 
-            {#if adaTerlambat}
-                <div class="alert alert-error mt-4">
-                    <span>
-                        Baris berwarna merah diinput di hari yang berbeda dari tanggal transfernya.
-                    </span>
-                </div>
-            {/if}
+    {#if adaTerlambat}
+        <div class="alert alert-error">
+            <Icon name="macet" size={18} />
+            <span>Baris berwarna merah diinput di hari yang berbeda dari tanggal transfernya.</span>
+        </div>
+    {/if}
 
-            <div class="overflow-x-auto mt-4 max-h-[70vh]">
+    <Panel flush>
+            <div class="overflow-x-auto max-h-[70vh]">
                 <table class="table-kosada">
                     <thead>
                         <tr>
@@ -275,7 +284,5 @@
                     {/if}
                 </table>
             </div>
-
-        </div>
-    </div>
+    </Panel>
 </div>

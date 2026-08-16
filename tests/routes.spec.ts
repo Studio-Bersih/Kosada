@@ -21,13 +21,13 @@ import { test, expect } from '@playwright/test';
 const APP_ROUTES = [
     { path : '/',                 marker : 'Masuk' },
     { path : '/dashboard',        marker : 'Data Pinjaman' },
-    { path : '/member',           marker : 'Member Koperasi Kosada' },
-    { path : '/tambah-member',    marker : 'Penambahan Member Baru' },
-    { path : '/tambah-kredit',    marker : 'Penambahan Kredit Baru' },
+    { path : '/member',           marker : 'Anggota Koperasi' },
+    { path : '/tambah-member',    marker : 'Tambah Anggota' },
+    { path : '/tambah-kredit',    marker : 'Tambah Kredit' },
     { path : '/report',           marker : 'Laporan Bulanan' },
     { path : '/data-macet',       marker : 'Data Kredit Macet' },
     { path : '/transfer-harian',  marker : 'Data Transfer Harian' },
-    { path : '/surat-tugas',      marker : 'Surat Tugas!' },
+    { path : '/surat-tugas',      marker : 'Surat Tugas' },
     { path : '/ganti-password',   marker : 'Ganti Password' }
 ];
 

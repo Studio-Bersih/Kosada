@@ -4,6 +4,9 @@
     import { rupiahFormatter } from "$lib/formatter";
     import MarketingSelect from "$lib/MarketingSelect.svelte";
     import { normalizeList, readJsonArray } from "$lib/apiList";
+    import PageHeader from "$lib/PageHeader.svelte";
+    import Panel from "$lib/Panel.svelte";
+    import Icon from "$lib/Icon.svelte";
 
     let newData:any = [];
     let hiddenData:any = [];
@@ -115,58 +118,61 @@
         nama      : applied.nama ?? ''
     }).toString();
 </script>
-<div class="container mx-auto">
-    <div class="card w-full bg-base-100 shadow-xl my-10">
-        <div class="card-body">
-            <h2 class="card-title">Laporan Bulanan</h2>
+<svelte:head><title>Laporan — Kosada</title></svelte:head>
 
-            <form class="grid gap-2 grid-cols-5" on:submit|preventDefault={applyFilters}>
-                <div class="form-control w-full max-w-xs">
-                    <label for="cariNama" class="label">
-                        <span class="label-text">Cari Nama</span>
-                    </label>
-                    <input id="cariNama" type="search" bind:value={form.nama} placeholder="Kosongkan untuk semua" class="input input-bordered w-full max-w-xs"/>
-                </div>
+<PageHeader title="Laporan Bulanan" description="Rekap kasbon dan angsuran per periode">
+    <svelte:fragment slot="meta">
+        {#if meta.total > 0}
+            <span aria-hidden="true">·</span>
+            <span><strong class="text-base-content">{meta.total.toLocaleString('id-ID')}</strong> data</span>
+            <span aria-hidden="true">·</span>
+            <span>cetak berisi seluruhnya</span>
+        {/if}
+    </svelte:fragment>
 
-                <div class="form-control w-full max-w-xs">
-                    <label for="startDate" class="label">
-                        <span class="label-text">Tanggal Awal</span>
-                    </label>
-                    <input id="startDate" type="date" bind:value={form.awal} class="input input-bordered w-full max-w-xs" required/>
-                </div>
-                <div class="form-control w-full max-w-xs">
-                    <label for="endDate" class="label">
-                        <span class="label-text">Tanggal Akhir</span>
-                    </label>
-                    <input id="endDate" type="date" bind:value={form.akhir} class="input input-bordered w-full max-w-xs" required/>
-                </div>
-                <div class="form-control w-full max-w-xs">
-                    <label for="pilihMarketing" class="label">
-                        <span class="label-text">Pilih Data Marketing</span>
-                    </label>
-                    <MarketingSelect
-                        bind:value={form.marketing}
-                        includeSemua
-                        semuaLabel="Tampilkan Semua Data"
-                        required />
-                </div>
-                <button type="submit" class="btn btn-primary mt-8">Lihat Laporan</button>
-            </form>
+    <svelte:fragment slot="actions">
+        <button type="button" class="btn btn-ghost btn-sm" on:click={onToggleShowHidden}>
+            {showHidden ? 'Sembunyikan daftar' : 'Yang disembunyikan'}
+        </button>
+        {#if newData.length > 0}
+            <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
+                <Icon name="print" size={16} /> Cetak
+            </a>
+        {/if}
+    </svelte:fragment>
 
-            <div class="flex justify-between items-center mt-6">
-                <button type="button" class="btn btn-ghost btn-sm" on:click={onToggleShowHidden}>
-                    {showHidden ? 'Sembunyikan daftar tersembunyi' : 'Tampilkan yang disembunyikan'}
-                </button>
+    <svelte:fragment slot="toolbar">
+        <form class="px-4 lg:px-8 pb-3 flex flex-wrap items-center gap-2"
+              on:submit|preventDefault={applyFilters}>
+            <label class="input input-bordered input-sm flex items-center gap-2 grow max-w-xs">
+                <Icon name="search" size={16} />
+                <input id="cariNama" type="search" bind:value={form.nama}
+                       placeholder="Cari nama (kosongkan untuk semua)" class="grow min-w-0"/>
+            </label>
 
-                {#if newData.length > 0}
-                    <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
-                        Cetak Laporan
-                    </a>
-                {/if}
+            <div class="flex items-center gap-1 text-sm">
+                <input id="startDate" type="date" bind:value={form.awal}
+                       class="input input-bordered input-sm" aria-label="Tanggal awal" required/>
+                <span class="text-muted">—</span>
+                <input id="endDate" type="date" bind:value={form.akhir}
+                       class="input input-bordered input-sm" aria-label="Tanggal akhir" required/>
             </div>
 
+            <MarketingSelect
+                bind:value={form.marketing}
+                includeSemua
+                semuaLabel="Semua Marketing"
+                class="select select-bordered select-sm"
+                required />
+
+            <button type="submit" class="btn btn-primary btn-sm">Lihat Laporan</button>
+        </form>
+    </svelte:fragment>
+</PageHeader>
+
+<div class="px-4 lg:px-8 py-5 space-y-5">
             {#if showHidden}
-                <div class="alert mt-4 block">
+                <div class="alert block">
                     <h3 class="font-bold mb-2">Data yang disembunyikan dari laporan</h3>
                     <p class="text-sm opacity-70 mb-2">
                         Data ini tidak hilang. Pinjaman dan angsurannya masih tersimpan dan tetap tampil di Dashboard.
@@ -198,7 +204,8 @@
                 </div>
             {/if}
 
-            <div class="overflow-x-auto mt-6 max-h-[70vh]">
+    <Panel flush>
+            <div class="overflow-x-auto max-h-[70vh]">
                 <table class="table-kosada">
                     <thead>
                         <tr>
@@ -246,10 +253,9 @@
             </div>
 
             {#if newData.length > 0}
-                <div class="flex justify-between items-center flex-wrap gap-2 mt-4">
-                    <span class="text-sm opacity-70">
-                        {meta.total} data · halaman {meta.page} dari {meta.last_page}
-                        · <span class="opacity-80">cetak berisi seluruh {meta.total} data</span>
+                <div class="flex justify-between items-center flex-wrap gap-2 border-t border-base-300 px-4 py-3">
+                    <span class="text-sm text-muted">
+                        {meta.total.toLocaleString('id-ID')} data · halaman {meta.page} dari {meta.last_page}
                     </span>
 
                     <div class="flex items-center gap-2">
@@ -268,7 +274,5 @@
                     </div>
                 </div>
             {/if}
-
-        </div>
-    </div>
+    </Panel>
 </div>

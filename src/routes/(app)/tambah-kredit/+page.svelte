@@ -1,4 +1,6 @@
 <script lang="ts">
+    import PageHeader from "$lib/PageHeader.svelte";
+    import Panel from "$lib/Panel.svelte";
     import { baseConfiguration } from "$lib/baseConfig";
     import { rupiahFormatter } from "$lib/formatter";
     import toast from '$lib/toast';
@@ -76,11 +78,12 @@
         return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
-<div class="container mx-auto">
+<svelte:head><title>Tambah Kredit — Kosada</title></svelte:head>
 
-    <div class="card w-full bg-base-100 shadow-xl my-5">
-        <div class="card-body">
-            <h2 class="card-title">Penambahan Kredit Baru </h2>
+<PageHeader title="Tambah Kredit" description="Buat pinjaman baru untuk nasabah" />
+
+<div class="px-4 lg:px-8 py-5">
+    <Panel>
             <form on:submit|preventDefault={doPost}>
                 <div class="grid grid-cols-2 place-items-center gap-2 my-5">
 
@@ -189,8 +192,5 @@
                 
 
             </form>
-
-        </div>
-    </div>
-
+    </Panel>
 </div>

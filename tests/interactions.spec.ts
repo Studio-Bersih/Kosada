@@ -64,7 +64,7 @@ test.describe('Laporan', () => {
         await expect(page.locator('#startDate')).toBeVisible();
         await expect(page.locator('#endDate')).toBeVisible();
 
-        const toggle = page.getByRole('button', { name : /Tampilkan yang disembunyikan/ });
+        const toggle = page.getByRole('button', { name : /Yang disembunyikan/ });
         await expect(toggle).toBeVisible();
         await toggle.click();
 
@@ -77,7 +77,7 @@ test.describe('Laporan', () => {
         // `toggle` was located BY its accessible name, so it stops matching once
         // the label flips. Assert the new label as its own locator.
         await expect(
-            page.getByRole('button', { name : /Sembunyikan daftar tersembunyi/ })
+            page.getByRole('button', { name : /Sembunyikan daftar/ })
         ).toBeVisible();
     });
 });
@@ -90,7 +90,7 @@ test.describe('Data Macet', () => {
         await expect(page.locator('#cariNama')).toBeVisible();
         await expect(page.locator('#pilihStatus')).toBeVisible();
 
-        const print = page.getByRole('link', { name : /Cetak Data Macet/ });
+        const print = page.getByRole('link', { name : /Cetak/ });
         await expect(print).toBeVisible();
         await expect(print).toHaveAttribute('href', /status=/);
     });

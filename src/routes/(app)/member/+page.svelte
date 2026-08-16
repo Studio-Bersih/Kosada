@@ -4,6 +4,9 @@
     import MarketingSelect from "$lib/MarketingSelect.svelte";
     import EmptyState from "$lib/EmptyState.svelte";
     import SkeletonRows from "$lib/SkeletonRows.svelte";
+    import PageHeader from "$lib/PageHeader.svelte";
+    import Panel from "$lib/Panel.svelte";
+    import Icon from "$lib/Icon.svelte";
     import { normalizeList } from "$lib/apiList";
     export let data;
     let newData:any = data.data;
@@ -143,33 +146,48 @@
         return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
-<div class="container mx-auto">
+<svelte:head><title>Anggota Koperasi — Kosada</title></svelte:head>
 
-    <div class="flex justify-between my-5 gap-2 flex-wrap">
-        <h2 class="card-title">Member Koperasi Kosada</h2>
-        <form on:submit|preventDefault={applyFilters} class="flex gap-2 flex-wrap items-center">
-            <input
-                type="search"
-                bind:value={form.nama}
-                placeholder="Ketik nama, lalu tekan Cari"
-                class="input input-bordered max-w-xs"/>
+<PageHeader title="Anggota Koperasi" description="Data nasabah">
+    <svelte:fragment slot="meta">
+        {#if meta.total > 0}
+            <span aria-hidden="true">·</span>
+            <span><strong class="text-base-content">{meta.total.toLocaleString('id-ID')}</strong> anggota</span>
+        {/if}
+    </svelte:fragment>
+
+    <svelte:fragment slot="actions">
+        <a href="/tambah-member" class="btn btn-primary btn-sm">
+            <Icon name="addMember" size={16} /> Tambah Anggota
+        </a>
+    </svelte:fragment>
+
+    <svelte:fragment slot="toolbar">
+        <form on:submit|preventDefault={applyFilters}
+              class="px-4 lg:px-8 pb-3 flex flex-wrap items-center gap-2">
+            <label class="input input-bordered input-sm flex items-center gap-2 grow max-w-xs">
+                <Icon name="search" size={16} />
+                <input type="search" bind:value={form.nama} placeholder="Cari nama anggota" class="grow min-w-0"/>
+            </label>
             <MarketingSelect
                 bind:value={form.kategori}
                 includeSemua
-                semuaLabel="Tampilkan Semua Member" />
-            <button type="submit" class="btn btn-primary" disabled={isLoading}>
+                semuaLabel="Semua Marketing"
+                class="select select-bordered select-sm" />
+            <button type="submit" class="btn btn-primary btn-sm" disabled={isLoading}>
                 {#if isLoading}
-                    <span class="loading loading-spinner loading-sm"></span> Mencari..
+                    <span class="loading loading-spinner loading-xs"></span> Mencari..
                 {:else}
                     Cari
                 {/if}
             </button>
         </form>
-      </div>
+    </svelte:fragment>
+</PageHeader>
 
-    <div class="card w-full bg-base-100 shadow-xl">
-        <div class="card-body">
-            <div class="overflow-x-auto">
+<div class="px-4 lg:px-8 py-5">
+    <Panel flush>
+            <div class="overflow-x-auto max-h-[70vh]">
                 <table class="table-kosada">
                     <thead>
                         <tr>
@@ -225,9 +243,9 @@
                 </table>
             </div>
 
-            <div class="flex justify-between items-center flex-wrap gap-2 mt-4">
-                <span class="text-sm opacity-70">
-                    {meta.total} anggota · halaman {meta.page} dari {meta.last_page}
+            <div class="flex justify-between items-center flex-wrap gap-2 border-t border-base-300 px-4 py-3">
+                <span class="text-sm text-muted">
+                    {meta.total.toLocaleString('id-ID')} anggota · halaman {meta.page} dari {meta.last_page}
                 </span>
 
                 <div class="flex items-center gap-2">
@@ -245,8 +263,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+    </Panel>
 </div>
 
 <div class="modal" class:modal-open={isModal}>

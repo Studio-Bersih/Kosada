@@ -1,4 +1,6 @@
 <script lang="ts">
+    import PageHeader from "$lib/PageHeader.svelte";
+    import Panel from "$lib/Panel.svelte";
     import { baseConfiguration } from "$lib/baseConfig";
     import toast from '$lib/toast';
     import Toaster from '$lib/Toaster.svelte';
@@ -33,14 +35,18 @@
         return doResponse.status == 'success' ? toast.success(doResponse.message, { position: 'top-right' }) : toast.error(doResponse.message, { position : 'top-right' });
     }
 </script>
-<div class="container mx-auto">
-    <div class="card w-full bg-base-100 shadow-xl my-10">
-        <div class="card-body">
-            <h1 class="card-title">Surat Tugas!</h1>
-            <div class="flex justify-end">
-                <button type="button" on:click={() => isModal = true} class="btn btn-primary w-48 my-2 ms-2">Buat Surat Tugas</button>
-            </div>
+<svelte:head><title>Surat Tugas — Kosada</title></svelte:head>
 
+<PageHeader title="Surat Tugas" description="Buat dan cetak surat tugas">
+    <svelte:fragment slot="actions">
+        <button type="button" on:click={() => isModal = true} class="btn btn-primary btn-sm">
+            Buat Surat Tugas
+        </button>
+    </svelte:fragment>
+</PageHeader>
+
+<div class="px-4 lg:px-8 py-5">
+    <Panel>
             <div class="overflow-x-auto">
                 <table class="table">
                     <thead>
@@ -70,8 +76,7 @@
                 </table>
             </div>
 
-        </div>
-    </div>
+    </Panel>
 </div>
 
 
