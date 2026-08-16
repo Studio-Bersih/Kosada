@@ -14,8 +14,12 @@
     let namaNasabah:string   = '';
     let showHidden:boolean   = false;
 
-    // Footer totals for the period. The client asked for a per-row TOTAL; the
-    // column sums make the printed sheet usable without a calculator.
+    let page:number = 1;
+    let meta:any    = { page : 1, per_page : 25, total : 0, last_page : 1 };
+
+    // These total the rows currently on screen, so with pagination they are a page
+    // total and the footer says so. The print sheet is unpaginated, so its footer
+    // is the true period total.
     $: totalKasbon   = newData.reduce((sum:number, d:any) => sum + Number(d.KASBON ?? 0), 0);
     $: totalAngsuran = newData.reduce((sum:number, d:any) => sum + Number(d.CICILAN_TOTAL ?? 0), 0);
     $: totalSemua    = newData.reduce((sum:number, d:any) => sum + Number(d.TOTAL ?? 0), 0);
@@ -28,11 +32,14 @@
                 TANGGAL_AWAL    : tanggalAwal,
                 TANGGAL_AKHIR   : tanggalAkhir,
                 MARKETING       : dataMarketing,
-                NAMA            : namaNasabah
+                NAMA            : namaNasabah,
+                page            : page,
+                per_page        : meta.per_page
             })
         });
         const doResponse = await doPost.json();
-        newData = doResponse;
+        newData = doResponse.data ?? [];
+        meta    = doResponse.meta ?? meta;
         return newData;
     };
 
@@ -42,6 +49,17 @@
             success : 'Data berhasil dimuat!',
             error   : 'Ada masalah pada server'
         }, { position : 'top-right' });
+    }
+
+    function applyFilters(){
+        page = 1;
+        return doPost();
+    }
+
+    function gotoPage(n:number){
+        if(n < 1 || n > meta.last_page || n === meta.page) return;
+        page = n;
+        getReport();
     }
 
     async function loadHidden(){
@@ -94,7 +112,7 @@
         <div class="card-body">
             <h2 class="card-title">Laporan Bulanan</h2>
 
-            <form class="grid gap-2 grid-cols-5" on:submit|preventDefault={doPost}>
+            <form class="grid gap-2 grid-cols-5" on:submit|preventDefault={applyFilters}>
                 <div class="form-control w-full max-w-xs">
                     <label for="cariNama" class="label">
                         <span class="label-text">Cari Nama</span>
@@ -189,7 +207,7 @@
                     <tbody>
                         {#each newData as data,index }
                             <tr class="hover">
-                                <td>{ index + 1 }</td>
+                                <td>{ (meta.page - 1) * meta.per_page + index + 1 }</td>
                                 <td>{ data.NAMA }</td>
                                 <td>{ rupiahFormatter.format(data.KASBON) }</td>
                                 <td>{ rupiahFormatter.format(data.CICILAN_TOTAL) }</td>
@@ -207,7 +225,7 @@
                     {#if newData.length > 0}
                         <tfoot>
                             <tr class="font-bold">
-                                <td colspan="2">Total ({newData.length} data)</td>
+                                <td colspan="2">Total halaman ini ({newData.length} data)</td>
                                 <td>{ rupiahFormatter.format(totalKasbon) }</td>
                                 <td>{ rupiahFormatter.format(totalAngsuran) }</td>
                                 <td colspan="2"></td>
@@ -218,6 +236,30 @@
                     {/if}
                 </table>
             </div>
+
+            {#if newData.length > 0}
+                <div class="flex justify-between items-center flex-wrap gap-2 mt-4">
+                    <span class="text-sm opacity-70">
+                        {meta.total} data · halaman {meta.page} dari {meta.last_page}
+                        · <span class="opacity-80">cetak berisi seluruh {meta.total} data</span>
+                    </span>
+
+                    <div class="flex items-center gap-2">
+                        <select bind:value={meta.per_page} on:change={applyFilters} class="select select-bordered select-sm">
+                            <option value={25}>25 / halaman</option>
+                            <option value={50}>50 / halaman</option>
+                            <option value={100}>100 / halaman</option>
+                        </select>
+                        <div class="join">
+                            <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1} on:click={() => gotoPage(1)}>«</button>
+                            <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1} on:click={() => gotoPage(meta.page - 1)}>‹</button>
+                            <button type="button" class="join-item btn btn-sm">{meta.page}</button>
+                            <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page} on:click={() => gotoPage(meta.page + 1)}>›</button>
+                            <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page} on:click={() => gotoPage(meta.last_page)}>»</button>
+                        </div>
+                    </div>
+                </div>
+            {/if}
 
         </div>
     </div>

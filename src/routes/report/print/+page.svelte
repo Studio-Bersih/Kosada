@@ -38,7 +38,9 @@
 
     onMount(async () => {
         try {
-            const doPost = await fetch(baseConfiguration.clientURL + 'Report', {
+            // Report/Print, not Report: the screen endpoint is paginated and a
+            // printed monthly report must contain every row.
+            const doPost = await fetch(baseConfiguration.clientURL + 'Report/Print', {
                 method  : 'POST',
                 headers : { 'Content-Type' : 'application/json' },
                 body    : JSON.stringify({
@@ -48,7 +50,8 @@
                     NAMA          : nama
                 })
             });
-            rows = await doPost.json();
+            const doResponse = await doPost.json();
+            rows = doResponse.data ?? [];
         } catch {
             failed = true;
         }

@@ -4,9 +4,15 @@
     import Header from "../features/Header.svelte";
     import toast, { Toaster } from 'svelte-french-toast';
 
+    import MemberSearch from "$lib/MemberSearch.svelte";
+
     export let data;
-    let newData:any     = data.member;
     let uniqueID:string = data.unique;
+
+    // The nasabah is now picked via typeahead. This page used to receive all 2,736
+    // members up front and render them as <option> elements.
+    let selectedMember:any = null;
+    let namaNasabah:string = '';
 
     let time:Date   = new Date();
     $: day          = time.getDay();
@@ -18,7 +24,6 @@
 
     let jumlahPengajuan:number;
     let timePeriod:number       = 1;
-    let currentID:number;
     let currentAddress:string   = '-';
     let currentMarketing:string = '-';
     let jatuhTempo:Date;
@@ -33,18 +38,32 @@
         time = new Date();
     },1000)
 
-    function changeData(ID:number):void {
-        currentAddress      = newData[ID].ALAMAT;
-        currentMarketing    = newData[ID].DATA_MARKETING;
+    function onSelectMember(event:CustomEvent<any>):void {
+        selectedMember   = event.detail;
+        currentAddress   = selectedMember.ALAMAT || '-';
+        currentMarketing = selectedMember.MARKETING || '-';
+    }
+
+    function onClearMember():void {
+        selectedMember   = null;
+        currentAddress   = '-';
+        currentMarketing = '-';
     }
 
     async function doPost(){
+        // Typing a name without picking from the list leaves no member ID, and the
+        // backend looks the nasabah up by ID. Catch it here with a clear message
+        // rather than letting it fail server-side.
+        if(!selectedMember){
+            return toast.error('Pilih nasabah dari daftar pencarian', { position : 'top-right' });
+        }
+
         const doPost = await fetch(baseConfiguration.clientURL + 'Tambah-Kredit',{
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
                 JUMLAH_PENGAJUAN : jumlahPengajuan,
-                ID : newData[currentID].ID,
+                ID : selectedMember.ID,
                 NO_KREDIT : uniqueID,
                 MARKETING : currentMarketing,
                 JANGKA_WAKTU : timePeriod,
@@ -79,12 +98,13 @@
                         <label for="inputNasabah" class="label">
                             <span class="label-text">Nama Nasabah</span>
                         </label>
-                        <select bind:value={currentID} on:change={() => changeData(currentID)} class="select select-bordered w-full max-w-lg" required>
-                            <option disabled selected>Pilih Nasabah</option>
-                            {#each newData as data,index }
-                                <option value="{index}">{data.NAMA}</option>
-                            {/each}
-                        </select>
+                        <MemberSearch
+                            id="inputNasabah"
+                            bind:value={namaNasabah}
+                            placeholder="Ketik nama nasabah.."
+                            required
+                            on:select={onSelectMember}
+                            on:clear={onClearMember} />
                     </div>
 
                     <div class="form-control w-full max-w-lg">

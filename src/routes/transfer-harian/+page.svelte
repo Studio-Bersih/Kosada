@@ -3,6 +3,7 @@
     import toast, { Toaster } from 'svelte-french-toast';
     import { baseConfiguration } from '$lib/baseConfig';
     import { rupiahFormatter } from '$lib/formatter';
+    import MemberSearch from '$lib/MemberSearch.svelte';
     import Header from '../features/Header.svelte';
 
     const JENIS = ['Kasbon','Top Up','Pinjaman Baru'];
@@ -20,7 +21,6 @@
 
     // --- entry form ---------------------------------------------------------
     let cariNama:string      = '';
-    let hasilCari:any        = [];
     let memberTerpilih:any   = null;
     let pinjaman:any         = [];
     let kreditTerpilih:any   = null;
@@ -44,25 +44,15 @@
 
     onMount(load);
 
-    let cariTimer:ReturnType<typeof setTimeout>;
-    function onCariInput(){
-        clearTimeout(cariTimer);
-        cariTimer = setTimeout(doCari, 300);
+    function onClearMember(){
+        memberTerpilih = null;
+        pinjaman       = [];
+        kreditTerpilih = null;
     }
 
-    async function doCari(){
-        if(!cariNama.trim()){
-            hasilCari = [];
-            return;
-        }
-        const doGet = await fetch(baseConfiguration.clientURL + 'Transfer-Harian/Cari-Member?nama=' + encodeURIComponent(cariNama), { method : 'GET' });
-        hasilCari = await doGet.json();
-    }
-
-    async function pilihMember(m:any){
+    async function pilihMember(event:CustomEvent<any>){
+        const m = event.detail;
         memberTerpilih = m;
-        hasilCari      = [];
-        cariNama       = m.NAMA;
         kreditTerpilih = null;
 
         const doGet = await fetch(baseConfiguration.clientURL + 'Transfer-Harian/Kredit-Member/' + m.ID, { method : 'GET' });
@@ -90,7 +80,7 @@
     }
 
     function resetForm(){
-        cariNama = ''; hasilCari = []; memberTerpilih = null;
+        cariNama = ''; memberTerpilih = null;
         pinjaman = []; kreditTerpilih = null;
         jenis = 'Kasbon'; nominal = null; keterangan = '';
     }
@@ -168,21 +158,13 @@
                 <h3 class="font-bold mb-3">Tambah Data Transfer</h3>
                 <div class="grid gap-3 md:grid-cols-3">
 
-                    <div class="form-control relative">
+                    <div class="form-control">
                         <label for="cariNasabah" class="label"><span class="label-text">Cari Nasabah</span></label>
-                        <input id="cariNasabah" type="search" bind:value={cariNama} on:input={onCariInput}
-                            placeholder="Ketik nama nasabah.." class="input input-bordered" autocomplete="off"/>
-                        {#if hasilCari.length > 0}
-                            <ul class="menu bg-base-100 rounded-box shadow absolute top-full left-0 right-0 z-20 max-h-60 overflow-y-auto">
-                                {#each hasilCari as m}
-                                    <li>
-                                        <button type="button" on:click={() => pilihMember(m)}>
-                                            {m.NAMA}<span class="opacity-60 text-xs">{m.PEKERJAAN}</span>
-                                        </button>
-                                    </li>
-                                {/each}
-                            </ul>
-                        {/if}
+                        <MemberSearch
+                            id="cariNasabah"
+                            bind:value={cariNama}
+                            on:select={pilihMember}
+                            on:clear={onClearMember} />
                         {#if memberTerpilih}
                             <span class="label-text-alt mt-1 opacity-70">Instansi: {memberTerpilih.PEKERJAAN || '-'}</span>
                         {/if}
