@@ -7,3 +7,48 @@
         display: none !important;
     }
 }
+
+/*
+| Shared A4 rules for the dedicated print routes (/report/print, /data-macet/print,
+| /transfer-harian/print). The office prints on A4.
+*/
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+@media print {
+    /* Let the sheet use the full page instead of the on-screen card. */
+    .print-sheet {
+        box-shadow: none !important;
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    /* Repeat the table header on every page and keep rows from splitting. */
+    .print-sheet thead {
+        display: table-header-group;
+    }
+    .print-sheet tfoot {
+        display: table-footer-group;
+    }
+    .print-sheet tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Print black on white regardless of the active theme. */
+    .print-sheet,
+    .print-sheet * {
+        color: #000 !important;
+        background: transparent !important;
+    }
+    .print-sheet table,
+    .print-sheet th,
+    .print-sheet td {
+        border-color: #999 !important;
+    }
+}
