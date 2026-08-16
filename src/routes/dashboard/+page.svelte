@@ -3,6 +3,7 @@
     import MarketingSelect from "$lib/MarketingSelect.svelte";
     import { initializeDate, rupiahFormatter } from "$lib/formatter";
     import { baseConfiguration } from "$lib/baseConfig";
+    import { normalizeList } from "$lib/apiList";
     import toast, { Toaster } from 'svelte-french-toast';
     import { onMount } from "svelte";
 
@@ -63,9 +64,9 @@
 
         isLoading = false;
 
-        const doResponse = await doPost.json();
-        newData = doResponse.data ?? [];
-        meta    = doResponse.meta ?? meta;
+        const list = normalizeList(await doPost.json(), meta.per_page, 'Realisasi-Kredit-Range');
+        newData = list.data;
+        meta    = list.meta;
 
         await loadStatusMacet();
     }

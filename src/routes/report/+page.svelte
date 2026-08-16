@@ -4,6 +4,7 @@
     import { rupiahFormatter } from "$lib/formatter";
     import Header from "../features/Header.svelte";
     import MarketingSelect from "$lib/MarketingSelect.svelte";
+    import { normalizeList } from "$lib/apiList";
 
     let newData:any = [];
     let hiddenData:any = [];
@@ -37,9 +38,9 @@
                 per_page        : meta.per_page
             })
         });
-        const doResponse = await doPost.json();
-        newData = doResponse.data ?? [];
-        meta    = doResponse.meta ?? meta;
+        const list = normalizeList(await doPost.json(), meta.per_page, 'Report');
+        newData = list.data;
+        meta    = list.meta;
         return newData;
     };
 

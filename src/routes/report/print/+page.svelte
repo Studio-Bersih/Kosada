@@ -10,6 +10,7 @@
     import { page } from '$app/stores';
     import { baseConfiguration } from '$lib/baseConfig';
     import { rupiahFormatter } from '$lib/formatter';
+    import { normalizeList } from '$lib/apiList';
     import Letterhead from '$lib/Letterhead.svelte';
 
     let rows:any = [];
@@ -40,18 +41,35 @@
         try {
             // Report/Print, not Report: the screen endpoint is paginated and a
             // printed monthly report must contain every row.
-            const doPost = await fetch(baseConfiguration.clientURL + 'Report/Print', {
+            const body = JSON.stringify({
+                TANGGAL_AWAL  : awal,
+                TANGGAL_AKHIR : akhir,
+                MARKETING     : marketing,
+                NAMA          : nama
+            });
+
+            let doPost = await fetch(baseConfiguration.clientURL + 'Report/Print', {
                 method  : 'POST',
                 headers : { 'Content-Type' : 'application/json' },
-                body    : JSON.stringify({
-                    TANGGAL_AWAL  : awal,
-                    TANGGAL_AKHIR : akhir,
-                    MARKETING     : marketing,
-                    NAMA          : nama
-                })
+                body    : body
             });
-            const doResponse = await doPost.json();
-            rows = doResponse.data ?? [];
+
+            /*
+            | Report/Print only exists on the updated backend. Against an older one
+            | it 404s, and a print sheet that silently comes out empty is worse than
+            | almost any other failure — so fall back to Report, which on that
+            | backend is unpaginated anyway and therefore still complete.
+            */
+            if(doPost.status === 404){
+                console.warn('[Kosada] Report/Print not found — falling back to Report. Deploy Marmyadose to get the paginated split.');
+                doPost = await fetch(baseConfiguration.clientURL + 'Report', {
+                    method  : 'POST',
+                    headers : { 'Content-Type' : 'application/json' },
+                    body    : body
+                });
+            }
+
+            rows = normalizeList(await doPost.json(), 25, 'Report/Print').data;
         } catch {
             failed = true;
         }

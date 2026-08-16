@@ -3,6 +3,7 @@
     import { baseConfiguration } from "$lib/baseConfig";
     import Header from "../features/Header.svelte";
     import MarketingSelect from "$lib/MarketingSelect.svelte";
+    import { normalizeList } from "$lib/apiList";
     export let data;
     let newData:any = data.data;
     let meta:any    = data.meta;
@@ -43,9 +44,9 @@
         const doGet = await fetch(baseConfiguration.clientURL + 'Semua-Member?' + params.toString(), {
             method : 'GET'
         });
-        const doResponse = await doGet.json();
-        newData = doResponse.data ?? [];
-        meta    = doResponse.meta ?? meta;
+        const list = normalizeList(await doGet.json(), meta.per_page, 'Semua-Member');
+        newData = list.data;
+        meta    = list.meta;
         return newData;
     }
 

@@ -1,4 +1,5 @@
 import { baseConfiguration } from '$lib/baseConfig.js'
+import { normalizeList } from '$lib/apiList.js';
 import { marketing } from '../../strings/marketing.js';
 import { kumpulanProvinsi } from '../../strings/provinsi.js';
 
@@ -8,10 +9,10 @@ export const load = async ({fetch}) => {
     const doGet = await fetch(baseConfiguration.defaultURL + 'Semua-Member?page=1&per_page=25',{
         method      : 'GET',
     });
-    const doResponse = await doGet.json();
+    const list = normalizeList(await doGet.json(), 25, 'Semua-Member (SSR)');
     return {
-        data : doResponse.data ?? [],
-        meta : doResponse.meta ?? { page : 1, per_page : 25, total : 0, last_page : 1 },
+        data : list.data,
+        meta : list.meta,
         provinsi : kumpulanProvinsi,
         marketing : marketing
     }

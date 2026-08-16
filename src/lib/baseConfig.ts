@@ -2,7 +2,7 @@
 | Must stay derived from the build mode. Hardcoding this to `true` points a
 | production deploy at localhost:8000 and the whole app goes blank.
 */
-const isDevelopment:boolean = import.meta.env.DEV;
+const isDevelopment:boolean = false;
 
 /*
 | Upstream Laravel API. Only ever reached from the server — the +page.server.ts
