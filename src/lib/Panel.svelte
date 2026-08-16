@@ -23,7 +23,7 @@
 -->
 <section
     class="bg-base-100 border border-base-300 rounded-xl overflow-hidden {klass}"
-    style="animation: kosada-rise var(--dur-base) var(--ease-out) 60ms both;">
+    style="animation: kosada-rise var(--dur-base) var(--ease-out) 60ms backwards;">
     <div class={flush ? '' : 'p-4 lg:p-5'}>
         <slot />
     </div>

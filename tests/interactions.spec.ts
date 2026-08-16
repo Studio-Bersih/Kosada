@@ -217,3 +217,78 @@ test.describe('Administrator-only row actions', () => {
         }
     });
 });
+
+/*
+| The Drawer must measure itself against the viewport, not against the page.
+|
+| It regressed once already. `.page-enter` animates `kosada-rise`, and while that
+| animation filled `forwards` the element kept a resolved `transform` matrix
+| forever — Chrome reports `matrix(1, 0, 0, 1, 0, 0)`, which is not `none`. A
+| transform that is not `none` makes an element a containing block for every
+| `position: fixed` descendant, so the Drawer's `inset-y-0` resolved against the
+| page content box (321px) instead of the window (720px). Short pages gave short
+| drawers.
+|
+| The fix is `backwards` rather than `both` on every user of that keyframe. These
+| tests fail if anyone puts `forwards`/`both` back, or introduces a transform,
+| filter, perspective or `contain` on an ancestor of the Drawer.
+*/
+test.describe('Drawer geometry', () => {
+    test('.page-enter settles with no transform, so it traps nothing', async ({ page }) => {
+        await page.goto('/dashboard');
+        await page.waitForLoadState('networkidle');
+
+        const settled = await page.evaluate(() => {
+            const pe = document.querySelector('.page-enter');
+            const panel = document.querySelector('section[style*="kosada-rise"]');
+            const row = document.querySelector('.table-kosada tbody tr');
+            return {
+                pageEnter : pe ? getComputedStyle(pe).transform : null,
+                panel     : panel ? getComputedStyle(panel).transform : 'none',
+                row       : row ? getComputedStyle(row).transform : 'none'
+            };
+        });
+
+        expect(settled.pageEnter).toBe('none');
+        expect(settled.panel).toBe('none');
+        expect(settled.row).toBe('none');
+    });
+
+    test('an open Drawer is full viewport height', async ({ page }) => {
+        await page.goto('/dashboard');
+        await page.evaluate(() => localStorage.setItem('kosada.account',
+            JSON.stringify({ email:'someone@kosada.id', name:'Tester', privilege:'Administrator' })));
+        await page.goto('/akun');
+        await page.waitForLoadState('networkidle');
+
+        await page.getByRole('button', { name : /Tambah Akun/i }).first().click();
+        // Let the slide-in settle before measuring.
+        await page.waitForTimeout(500);
+
+        const geo = await page.evaluate(() => {
+            // The Sidebar is also an `aside.fixed`; the Drawer is the one inside
+            // the page content.
+            const drawer = [...document.querySelectorAll('aside.fixed')]
+                .find(a => a.closest('.page-enter'));
+            const pageEnter = document.querySelector('.page-enter');
+            if(!drawer || !pageEnter) throw new Error('Drawer or .page-enter not found');
+
+            const r = drawer.getBoundingClientRect();
+            return {
+                height    : r.height,
+                top       : r.top,
+                right     : r.right,
+                viewportH : window.innerHeight,
+                viewportW : window.innerWidth,
+                pageH     : pageEnter.getBoundingClientRect().height
+            };
+        });
+
+        expect(geo.height).toBe(geo.viewportH);
+        expect(geo.top).toBe(0);
+        expect(geo.right).toBe(geo.viewportW);
+        // The bug this guards: the page is shorter than the window, and the
+        // Drawer used to inherit that height.
+        expect(geo.pageH).toBeLessThan(geo.viewportH);
+    });
+});

@@ -155,6 +155,26 @@
     }
 }
 
+/*
+| Every user of this keyframe fills `backwards`, never `both`. That is load-bearing,
+| not a detail.
+|
+| `forwards` keeps the animation in effect after it finishes, and the filled value
+| of `transform` is a resolved matrix — `matrix(1, 0, 0, 1, 0, 0)`, not `none`.
+| Chrome reports exactly that on a settled `.page-enter`. A transform that is not
+| `none` makes the element a **containing block for every `position: fixed`
+| descendant**, so a fixed child stops being measured against the viewport and
+| starts being measured against that element instead.
+|
+| That is what made the Drawer take its height from the page content rather than
+| the window: `inset-y-0` resolved against a 321px `.page-enter` instead of a 720px
+| viewport. Measured before and after — 321px with `both`, 720px with `backwards`.
+|
+| Nothing is lost by dropping `forwards`: this keyframe ends on `opacity: 1` and
+| `transform: none`, which is already the un-animated base style. `backwards` is
+| still needed — it holds the `from` state during any animation-delay, which the
+| staggered table rows and Panel's 60ms offset both rely on.
+*/
 @keyframes kosada-rise {
     from { opacity: 0; transform: translate3d(0, 6px, 0); }
     to   { opacity: 1; transform: none; }
@@ -247,7 +267,10 @@
     | it replays on every navigation.
     */
     .page-enter {
-        animation: kosada-rise var(--dur-base) var(--ease-out) both;
+        /* `backwards`, not `both` — this element is the Drawer's parent, and
+           `forwards` would leave a transform matrix on it that traps the
+           Drawer's `position: fixed`. See the note on @keyframes kosada-rise. */
+        animation: kosada-rise var(--dur-base) var(--ease-out) backwards;
     }
 
     /*
@@ -259,7 +282,7 @@
     | which is the opposite of the point.
     */
     .table-kosada tbody tr {
-        animation: kosada-rise var(--dur-fast) var(--ease-out) both;
+        animation: kosada-rise var(--dur-fast) var(--ease-out) backwards;
     }
     .table-kosada tbody tr:nth-child(1)  { animation-delay: 0ms }
     .table-kosada tbody tr:nth-child(2)  { animation-delay: 12ms }
