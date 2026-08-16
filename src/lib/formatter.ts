@@ -12,20 +12,38 @@ function useFormat(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-function initializeDate(type: "first" | "last" | "current"): string {
+export type DateRange = { start: string; end: string };
+
+/*
+| The date range a list page opens on.
+|
+| Defaults to two calendar months: the first day of last month through the last
+| day of this month.
+|
+| This replaced a full-year default (1 Jan – 31 Dec), which asked for 1,244 loans
+| and ~196 KB before the user had done anything. Two months is enough to cover
+| the current collection cycle and the one before it, which is what staff
+| actually look at on arrival; anything older is a deliberate search.
+*/
+function defaultDateRange(months: number = 2): DateRange {
     const now: Date = new Date();
 
-    if (type === "last") {
-        const lastDate: Date = new Date(now.getFullYear(), 11, 31);
-        return useFormat(lastDate);
-    }
+    // Day 0 of next month === last day of this month.
+    const end: Date = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const start: Date = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
 
-    if (type === "first") {
-        const firstDate: Date = new Date(now.getFullYear(), 0, 1);
-        return useFormat(firstDate);
-    }
-
-    return useFormat(now); // Return the current date when type is "current"
+    return { start: useFormat(start), end: useFormat(end) };
 }
 
-export { rupiahFormatter, initializeDate }
+/*
+| "2026-08-16" -> "16 Agustus 2026". Returns the input unchanged if it isn't a
+| parseable date, so a malformed value shows as itself rather than "Invalid Date".
+*/
+function tanggalIndonesia(value: string): string {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+export { rupiahFormatter, defaultDateRange, tanggalIndonesia }

@@ -37,6 +37,19 @@ export type NormalizeOptions = {
     label?   : string;
 };
 
+/*
+| These warnings describe a deployment state, not a per-request event, so they are
+| emitted once per label. Repeating them on every page change and every keystroke
+| buries whatever else is in the console.
+*/
+const warned = new Set<string>();
+
+function warnOnce(key:string, message:string):void {
+    if(warned.has(key)) return;
+    warned.add(key);
+    console.warn(message);
+}
+
 export function normalizeList(response:any, options:NormalizeOptions = {}):NormalizedList {
     const page:number    = Math.max(1, options.page ?? 1);
     const perPage:number = Math.max(1, options.perPage ?? 25);
@@ -49,7 +62,7 @@ export function normalizeList(response:any, options:NormalizeOptions = {}):Norma
         const safePage:number  = Math.min(page, lastPage);
         const start:number     = (safePage - 1) * perPage;
 
-        console.warn(
+        warnOnce(`legacy:${label}`,
             `[Kosada] ${label}: the API returned ${total} rows unpaginated. ` +
             `This backend predates the pagination change — apply the SQL and deploy ` +
             `Marmyadose. Paginating client-side so the page stays responsive.`
@@ -104,7 +117,12 @@ export function readListAll(response:any):any[] {
 */
 export async function readJsonArray(response:Response, label = 'request'):Promise<any[]> {
     if(!response.ok){
-        console.warn(`[Kosada] ${label}: HTTP ${response.status}. Treating as empty.`);
+        warnOnce(`http:${label}:${response.status}`,
+            response.status === 404
+                ? `[Kosada] ${label}: route not found (404). This backend predates the feature — ` +
+                  `deploy Marmyadose. Continuing without it.`
+                : `[Kosada] ${label}: HTTP ${response.status}. Treating as empty.`
+        );
         return [];
     }
 
@@ -112,7 +130,7 @@ export async function readJsonArray(response:Response, label = 'request'):Promis
         const parsed = await response.json();
         return Array.isArray(parsed) ? parsed : [];
     } catch {
-        console.warn(`[Kosada] ${label}: response was not valid JSON. Treating as empty.`);
+        warnOnce(`parse:${label}`, `[Kosada] ${label}: response was not valid JSON. Treating as empty.`);
         return [];
     }
 }

@@ -4,16 +4,20 @@
     import { rupiahFormatter } from "$lib/formatter";
     import Header from "../features/Header.svelte";
     import MarketingSelect from "$lib/MarketingSelect.svelte";
-    import { normalizeList } from "$lib/apiList";
+    import { normalizeList, readJsonArray } from "$lib/apiList";
 
     let newData:any = [];
     let hiddenData:any = [];
 
-    let tanggalAwal:string;
-    let tanggalAkhir:string;
-    let dataMarketing:string = 'SEMUA';
-    let namaNasabah:string   = '';
     let showHidden:boolean   = false;
+
+    /*
+    | `form` is what the user is editing, `applied` is what the table is showing.
+    | The Cetak link is built from `applied`, so a printout always matches what is
+    | on screen rather than filters that were changed but never submitted.
+    */
+    let form    = { awal : '', akhir : '', marketing : 'SEMUA', nama : '' };
+    let applied = { awal : '', akhir : '', marketing : 'SEMUA', nama : '' };
 
     let page:number = 1;
     let meta:any    = { page : 1, per_page : 25, total : 0, last_page : 1 };
@@ -30,10 +34,10 @@
             method : 'POST',
             headers : { 'Content-Type' : 'application/json' },
             body : JSON.stringify({
-                TANGGAL_AWAL    : tanggalAwal,
-                TANGGAL_AKHIR   : tanggalAkhir,
-                MARKETING       : dataMarketing,
-                NAMA            : namaNasabah,
+                TANGGAL_AWAL    : applied.awal,
+                TANGGAL_AKHIR   : applied.akhir,
+                MARKETING       : applied.marketing,
+                NAMA            : applied.nama,
                 page            : page,
                 per_page        : meta.per_page
             })
@@ -57,6 +61,7 @@
     }
 
     function applyFilters(){
+        applied = { ...form };
         page = 1;
         return doPost();
     }
@@ -69,7 +74,8 @@
 
     async function loadHidden(){
         const doGet = await fetch(baseConfiguration.clientURL + 'Laporan-Tersembunyi',{ method : 'GET' });
-        hiddenData = await doGet.json();
+        // Same guard as Status-Macet: this route only exists on the updated backend.
+        hiddenData = await readJsonArray(doGet, 'Laporan-Tersembunyi');
         return hiddenData;
     }
 
@@ -90,7 +96,7 @@
         // whichever lists are on screen.
         if(hidden) newData = newData.filter((d:any) => d.ID !== ID);
         if(showHidden) await loadHidden();
-        if(!hidden && tanggalAwal && tanggalAkhir) await getReport();
+        if(!hidden && applied.awal && applied.akhir) await getReport();
     }
 
     async function onToggleShowHidden(){
@@ -104,10 +110,10 @@
     | along as query params so the printed page describes itself.
     */
     $: printHref = '/report/print?' + new URLSearchParams({
-        awal      : tanggalAwal  ?? '',
-        akhir     : tanggalAkhir ?? '',
-        marketing : dataMarketing ?? 'SEMUA',
-        nama      : namaNasabah ?? ''
+        awal      : applied.awal  ?? '',
+        akhir     : applied.akhir ?? '',
+        marketing : applied.marketing ?? 'SEMUA',
+        nama      : applied.nama ?? ''
     }).toString();
 </script>
 <Toaster />
@@ -122,27 +128,27 @@
                     <label for="cariNama" class="label">
                         <span class="label-text">Cari Nama</span>
                     </label>
-                    <input id="cariNama" type="search" bind:value={namaNasabah} placeholder="Kosongkan untuk semua" class="input input-bordered w-full max-w-xs"/>
+                    <input id="cariNama" type="search" bind:value={form.nama} placeholder="Kosongkan untuk semua" class="input input-bordered w-full max-w-xs"/>
                 </div>
 
                 <div class="form-control w-full max-w-xs">
                     <label for="startDate" class="label">
                         <span class="label-text">Tanggal Awal</span>
                     </label>
-                    <input id="startDate" type="date" bind:value={tanggalAwal} class="input input-bordered w-full max-w-xs" required/>
+                    <input id="startDate" type="date" bind:value={form.awal} class="input input-bordered w-full max-w-xs" required/>
                 </div>
                 <div class="form-control w-full max-w-xs">
                     <label for="endDate" class="label">
                         <span class="label-text">Tanggal Akhir</span>
                     </label>
-                    <input id="endDate" type="date" bind:value={tanggalAkhir} class="input input-bordered w-full max-w-xs" required/>
+                    <input id="endDate" type="date" bind:value={form.akhir} class="input input-bordered w-full max-w-xs" required/>
                 </div>
                 <div class="form-control w-full max-w-xs">
                     <label for="pilihMarketing" class="label">
                         <span class="label-text">Pilih Data Marketing</span>
                     </label>
                     <MarketingSelect
-                        bind:value={dataMarketing}
+                        bind:value={form.marketing}
                         includeSemua
                         semuaLabel="Tampilkan Semua Data"
                         required />

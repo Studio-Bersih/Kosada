@@ -7,9 +7,16 @@
     export let data;
     let newData:any = data.data;
     let meta:any    = data.meta;
-    let currentCategory:string  = 'SEMUA';
-    let currentNama:string      = '';
     let page:number             = 1;
+    let isLoading:boolean       = false;
+
+    /*
+    | `form` is what the user is typing, `applied` is what the table is showing.
+    | Nothing queries until the form is submitted, and paging reads `applied` so a
+    | half-typed name can't silently change which page you land on.
+    */
+    let form    = { nama : '', kategori : 'SEMUA' };
+    let applied = { nama : '', kategori : 'SEMUA' };
 
     let isModal:boolean     = false;
     let isDelete:boolean    = false;
@@ -34,28 +41,35 @@
     | as the co-op grew.
     */
     async function loadMembers(){
-        const params = new URLSearchParams({
-            page     : String(page),
-            per_page : String(meta.per_page)
-        });
-        if(currentNama) params.set('nama', currentNama);
-        if(currentCategory && currentCategory != 'SEMUA') params.set('marketing', currentCategory);
+        isLoading = true;
+        try {
+            const params = new URLSearchParams({
+                page     : String(page),
+                per_page : String(meta.per_page)
+            });
+            if(applied.nama) params.set('nama', applied.nama);
+            if(applied.kategori && applied.kategori != 'SEMUA') params.set('marketing', applied.kategori);
 
-        const doGet = await fetch(baseConfiguration.clientURL + 'Semua-Member?' + params.toString(), {
-            method : 'GET'
-        });
-        const list = normalizeList(await doGet.json(), {
-            page    : page,
-            perPage : meta.per_page,
-            label   : 'Semua-Member'
-        });
-        newData = list.data;
-        meta    = list.meta;
+            const doGet = await fetch(baseConfiguration.clientURL + 'Semua-Member?' + params.toString(), {
+                method : 'GET'
+            });
+            const list = normalizeList(await doGet.json(), {
+                page    : page,
+                perPage : meta.per_page,
+                label   : 'Semua-Member'
+            });
+            newData = list.data;
+            meta    = list.meta;
+        } catch {
+            toast.error('Ada masalah pada server', { position : 'top-right' });
+        }
+        isLoading = false;
         return newData;
     }
 
-    // Filter changes always return to page 1.
+    // Runs only on submit — this page no longer filters as you type.
     function applyFilters(){
+        applied = { ...form };
         page = 1;
         return loadMembers();
     }
@@ -64,12 +78,6 @@
         if(n < 1 || n > meta.last_page || n === meta.page) return;
         page = n;
         loadMembers();
-    }
-
-    let searchTimer:ReturnType<typeof setTimeout>;
-    function onNamaInput(){
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(applyFilters, 300);
     }
 
     function doEdit(ID:number){
@@ -138,21 +146,26 @@
 <Header/>
 <div class="container mx-auto">
 
-    <div class="flex justify-between my-5 gap-2">
+    <div class="flex justify-between my-5 gap-2 flex-wrap">
         <h2 class="card-title">Member Koperasi Kosada</h2>
-        <div class="flex gap-2">
+        <form on:submit|preventDefault={applyFilters} class="flex gap-2 flex-wrap items-center">
             <input
                 type="search"
-                bind:value={currentNama}
-                on:input={onNamaInput}
-                placeholder="Cari nama.."
+                bind:value={form.nama}
+                placeholder="Ketik nama, lalu tekan Cari"
                 class="input input-bordered max-w-xs"/>
             <MarketingSelect
-                bind:value={currentCategory}
+                bind:value={form.kategori}
                 includeSemua
-                semuaLabel="Tampilkan Semua Member"
-                on:change={applyFilters} />
-        </div>
+                semuaLabel="Tampilkan Semua Member" />
+            <button type="submit" class="btn btn-primary" disabled={isLoading}>
+                {#if isLoading}
+                    <span class="loading loading-spinner loading-sm"></span> Mencari..
+                {:else}
+                    Cari
+                {/if}
+            </button>
+        </form>
       </div>
 
     <div class="card w-full bg-base-100 shadow-xl">

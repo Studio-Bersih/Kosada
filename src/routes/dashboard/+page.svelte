@@ -1,7 +1,7 @@
 <script lang="ts">
     import Header from "../features/Header.svelte";
     import MarketingSelect from "$lib/MarketingSelect.svelte";
-    import { initializeDate, rupiahFormatter } from "$lib/formatter";
+    import { defaultDateRange, rupiahFormatter, tanggalIndonesia } from "$lib/formatter";
     import { baseConfiguration } from "$lib/baseConfig";
     import { normalizeList, readJsonArray } from "$lib/apiList";
     import toast, { Toaster } from 'svelte-french-toast';
@@ -24,10 +24,13 @@
     | uses `applied` — so clicking page 2 after typing a half-finished name gives
     | you page 2 of what is on screen, not page 2 of something you never searched.
     */
+    // Opens on the last two calendar months. See defaultDateRange().
+    const defaultRange = defaultDateRange(2);
+
     let form = {
         nama     : '',
         kategori : 'SEMUA',
-        date     : { start : initializeDate("first"), end : initializeDate("last") } as Form
+        date     : { ...defaultRange } as Form
     };
 
     let applied = {
@@ -35,6 +38,16 @@
         kategori : form.kategori,
         date     : { ...form.date }
     };
+
+    // What the table is currently showing, spelled out under the filters so the
+    // default range is never a mystery.
+    $: rangeLabel     = `${tanggalIndonesia(applied.date.start)} – ${tanggalIndonesia(applied.date.end)}`;
+    $: isDefaultRange = applied.date.start === defaultRange.start
+                     && applied.date.end   === defaultRange.end;
+
+    function resetRange(){
+        form.date = { ...defaultRange };
+    }
 
     let isLoading: boolean = false;
 
@@ -259,7 +272,26 @@
 <div class="container mx-auto my-5">
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-            
+
+            <!-- The active range, stated plainly. The dashboard used to open on the
+                 whole year without saying so, which made the first load feel slow
+                 for no visible reason. -->
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <h2 class="card-title">Data Pinjaman</h2>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="badge badge-neutral badge-lg">{rangeLabel}</span>
+                    {#if isDefaultRange}
+                        <span class="opacity-60">2 bulan terakhir (bawaan)</span>
+                    {:else}
+                        <button type="button" class="btn btn-ghost btn-xs" on:click={resetRange}>
+                            Kembalikan ke 2 bulan terakhir
+                        </button>
+                    {/if}
+                </div>
+            </div>
+
+            <div class="divider my-1"></div>
+
             <form on:submit|preventDefault={applyFilters} class="flex justify-between">
                 <div class="form-control w-full max-w-md">
                     <label for="cariNama" class="label">

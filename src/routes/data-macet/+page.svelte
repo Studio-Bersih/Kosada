@@ -4,16 +4,21 @@
     import { baseConfiguration } from '$lib/baseConfig';
     import { rupiahFormatter } from '$lib/formatter';
     import MarketingSelect from '$lib/MarketingSelect.svelte';
+    import { normalizeList } from '$lib/apiList';
     import Header from '../features/Header.svelte';
 
     let rows:any = [];
     let meta:any = { page : 1, per_page : 25, total : 0, last_page : 1 };
     let isLoading = false;
 
-    let cariNama:string    = '';
-    let marketing:string   = 'SEMUA';
-    let status:string      = 'Macet';
     let page:number        = 1;
+
+    /*
+    | `form` is what the user is typing, `applied` is what the table is showing.
+    | Nothing queries until the form is submitted; paging reads `applied`.
+    */
+    let form    = { nama : '', marketing : 'SEMUA', status : 'Macet' };
+    let applied = { nama : '', marketing : 'SEMUA', status : 'Macet' };
 
     // Resolve dialog
     let isSelesai:boolean      = false;
@@ -23,18 +28,22 @@
     async function load(){
         isLoading = true;
         const params = new URLSearchParams({
-            status   : status,
+            status   : applied.status,
             page     : String(page),
             per_page : String(meta.per_page)
         });
-        if(cariNama) params.set('nama', cariNama);
-        if(marketing && marketing !== 'SEMUA') params.set('marketing', marketing);
+        if(applied.nama) params.set('nama', applied.nama);
+        if(applied.marketing && applied.marketing !== 'SEMUA') params.set('marketing', applied.marketing);
 
         try {
             const doGet = await fetch(baseConfiguration.clientURL + 'Data-Macet?' + params.toString(), { method : 'GET' });
-            const doResponse = await doGet.json();
-            rows = doResponse.data ?? [];
-            meta = doResponse.meta ?? meta;
+            const list = normalizeList(await doGet.json(), {
+                page    : page,
+                perPage : meta.per_page,
+                label   : 'Data-Macet'
+            });
+            rows = list.data;
+            meta = list.meta;
         } catch {
             toast.error('Ada masalah pada server', { position : 'top-right' });
         }
@@ -43,15 +52,11 @@
 
     onMount(load);
 
-    let searchTimer:ReturnType<typeof setTimeout>;
-    function onNamaInput(){
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => { page = 1; load(); }, 300);
-    }
-
-    function onFilterChange(){
+    // Runs only on submit — this page no longer filters as you type.
+    function applyFilters(){
+        applied = { ...form };
         page = 1;
-        load();
+        return load();
     }
 
     function gotoPage(n:number){
@@ -87,10 +92,12 @@
         }
     }
 
+    // Built from `applied`, so the printout matches the table on screen rather
+    // than whatever half-typed filters are sitting in the form.
     $: printHref = '/data-macet/print?' + new URLSearchParams({
-        status    : status,
-        marketing : marketing,
-        nama      : cariNama
+        status    : applied.status,
+        marketing : applied.marketing,
+        nama      : applied.nama
     }).toString();
 
     $: totalTagihan = rows.reduce((s:number, r:any) => s + Number(r.TOTAL_TAGIHAN ?? 0), 0);
@@ -106,29 +113,37 @@
                 jadi angkanya ikut berkurang kalau nasabah membayar.
             </p>
 
-            <div class="flex flex-wrap gap-2 items-end mt-4">
+            <form on:submit|preventDefault={applyFilters} class="flex flex-wrap gap-2 items-end mt-4">
                 <div class="form-control">
                     <label for="cariNama" class="label"><span class="label-text">Cari Nama</span></label>
-                    <input id="cariNama" type="search" bind:value={cariNama} on:input={onNamaInput}
-                        placeholder="Ketik nama nasabah.." class="input input-bordered max-w-xs"/>
+                    <input id="cariNama" type="search" bind:value={form.nama}
+                        placeholder="Ketik nama, lalu tekan Cari" class="input input-bordered max-w-xs"/>
                 </div>
 
                 <div class="form-control">
                     <label for="pilihMarketing" class="label"><span class="label-text">Data Marketing</span></label>
-                    <MarketingSelect bind:value={marketing} includeSemua on:change={onFilterChange} />
+                    <MarketingSelect bind:value={form.marketing} includeSemua />
                 </div>
 
                 <div class="form-control">
                     <label for="pilihStatus" class="label"><span class="label-text">Status</span></label>
-                    <select id="pilihStatus" bind:value={status} on:change={onFilterChange} class="select select-info max-w-xs">
+                    <select id="pilihStatus" bind:value={form.status} class="select select-info max-w-xs">
                         <option value="Macet">Masih Macet</option>
                         <option value="Selesai">Sudah Selesai</option>
                         <option value="SEMUA">Semua</option>
                     </select>
                 </div>
 
+                <button type="submit" class="btn btn-accent" disabled={isLoading}>
+                    {#if isLoading}
+                        <span class="loading loading-spinner loading-sm"></span> Mencari..
+                    {:else}
+                        Cari
+                    {/if}
+                </button>
+
                 <a href={printHref} target="_blank" rel="noreferrer" class="btn btn-primary">Cetak Data Macet</a>
-            </div>
+            </form>
 
             <div class="overflow-x-auto mt-6">
                 <table class="table table-sm">
