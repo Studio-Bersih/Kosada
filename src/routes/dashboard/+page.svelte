@@ -1,5 +1,6 @@
 <script lang="ts">
     import Header from "../features/Header.svelte";
+    import MarketingSelect from "$lib/MarketingSelect.svelte";
     import { initializeDate, rupiahFormatter } from "$lib/formatter";
     import { baseConfiguration } from "$lib/baseConfig";
     import toast, { Toaster } from 'svelte-french-toast';
@@ -8,8 +9,15 @@
     // export let data;
 
     let newData:any             = [];
-    let staticData:any          = newData;
     let currentCategory:string  = 'SEMUA';
+    let currentNama:string      = '';
+
+    // Debounce the name box so typing doesn't fire a request per keystroke.
+    let searchTimer:ReturnType<typeof setTimeout>;
+    function onNamaInput(){
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(doPost, 300);
+    }
 
     type Form = Record<"start" | "end", string>;
     let useDate: Form = {
@@ -35,7 +43,8 @@
             body: JSON.stringify({
                 start: useDate.start,
                 end: useDate.end,
-                kategori: currentCategory
+                kategori: currentCategory,
+                nama: currentNama
             })
         });
 
@@ -45,6 +54,15 @@
         newData = doResponse;
         newData = newData;
     } 
+
+    /*
+    | Per-installment total: what this month actually costs the nasabah.
+    | KASBON starts life as NULL (see Kredit@addKredit) and the number input yields
+    | null when cleared, so both sides are coerced before adding.
+    */
+    function totalCicilan(detail:any):number {
+        return Number(detail.NOMINAL ?? 0) + Number(detail.KASBON ?? 0);
+    }
 
     async function showModal(ID:number){
         isModal = true;
@@ -136,30 +154,25 @@
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
             
-            <form on:submit={doPost} class="flex justify-between">
+            <form on:submit|preventDefault={doPost} class="flex justify-between">
+                <div class="form-control w-full max-w-md">
+                    <label for="cariNama" class="label">
+                        <span class="label-text">Cari Nama</span>
+                    </label>
+                    <input
+                        id="cariNama"
+                        type="search"
+                        bind:value={currentNama}
+                        on:input={onNamaInput}
+                        placeholder="Ketik nama nasabah.."
+                        class="input input-bordered max-w-xs"/>
+                </div>
+
                 <div class="form-control w-full max-w-md">
                     <label for="pilihKategori" class="label">
                         <span class="label-text">Pilih Kategori</span>
                     </label>
-                    <select bind:value={currentCategory} class="select select-info max-w-xs">
-                        <option selected disabled>Pilih Data Marketing</option>
-                        <option value="SEMUA">Tampilkan Semua Data</option>
-                        <option value="TGL 25">TGL 25</option>
-                        <option value="28 IM">28 IM</option>
-                        <option value="28 AM">28 AM</option>
-                        <option value="BCA 1">BCA 1</option>
-                        <option value="BCA 2">BCA 2</option>
-                        <option value="MAN 1">MAN 1</option>
-                        <option value="MAN 2">MAN 2</option>
-                        <option value="SAB/BRI">SAB/BRI</option>
-                        <option value="CIMB">CIMB</option>
-                        <option value="MJK">MJK</option>
-                        <option value="YAKULT">YAKULT</option>
-                        <option value="OPPO">OPPO</option>
-                        <option value="U.LOKA">U.LOKA</option>
-                        <option value="BNI">BNI</option>
-                        <option value="JATIM">JATIM</option>
-                    </select>
+                    <MarketingSelect bind:value={currentCategory} includeSemua />
                 </div>
 
                 <div class="form-control w-full max-w-md">
@@ -247,6 +260,7 @@
         <a href="/dashboard/report/{modalData.ID}" target="_blank" class="btn btn-primary my-2 ms-2">Cetak Halaman Pinjaman</a>
 
         <h1 class="mt-5">Kasbon Belum Lunas: { rupiahFormatter.format(modalData.KASBON_BELUM_LUNAS) }</h1>
+        <h1>Angsuran Belum Lunas: { rupiahFormatter.format(modalData.TOTAL_BELUM_LUNAS) }</h1>
         <div class="divider"></div>
 
         <div id="modalContent" class="grid grid-cols-2 place-items-center gap-2 my-5">
@@ -268,25 +282,10 @@
                 <label for="ubahMarketing" class="label">
                     <span class="label-text">Ubah Data Marketing</span>
                 </label>
-                <select bind:value={modalData.MARKETING} on:change={() => changeMarketing(modalData.ID,modalData.MARKETING)} class="select select-info max-w-xs">
-                    <option selected disabled>Pilih Data Marketing</option>
-                    <option value="SEMUA">Tampilkan Semua Data</option>
-                    <option value="TGL 25">TGL 25</option>
-                    <option value="28 IM">28 IM</option>
-                    <option value="28 AM">28 AM</option>
-                    <option value="BCA 1">BCA 1</option>
-                    <option value="BCA 2">BCA 2</option>
-                    <option value="MAN 1">MAN 1</option>
-                    <option value="MAN 2">MAN 2</option>
-                    <option value="SAB/BRI">SAB/BRI</option>
-                    <option value="CIMB">CIMB</option>
-                    <option value="MJK">MJK</option>
-                    <option value="YAKULT">YAKULT</option>
-                    <option value="OPPO">OPPO</option>
-                    <option value="U.LOKA">U.LOKA</option>
-                    <option value="BNI">BNI</option>
-                    <option value="JATIM">JATIM</option>
-                </select>
+                <!-- No "SEMUA" here: this control WRITES the loan's marketing value. -->
+                <MarketingSelect
+                    bind:value={modalData.MARKETING}
+                    on:change={(e) => changeMarketing(modalData.ID, e.detail)} />
             </div>
 
             <div class="form-control w-full max-w-md">
@@ -305,6 +304,7 @@
                     <th>Nominal</th>
                     <th>Jatuh Tempo</th>
                     <th>Kasbon</th>
+                    <th>Total</th>
                     <th>Status Lunas</th>
                 </thead>
                 <tbody>
@@ -325,6 +325,7 @@
                                 <td>{rupiahFormatter.format(detail.NOMINAL)}</td>
                                 <td>{detail.JATUH_TEMPO}</td>
                                 <td><input type="number" bind:value="{detail.KASBON}" on:blur={() => changeKasbon(detail.ID,detail.KASBON)} placeholder="Kasbon" class="input input-bordered w-full max-w-md"/></td>
+                                <td class="font-bold whitespace-nowrap">{rupiahFormatter.format(totalCicilan(detail))}</td>
                                 <td>
                                     <select bind:value={detail.LUNAS} on:change={() => changeLunas(detail.ID,detail.LUNAS)} class="select select-bordered w-full max-w-md" required>
                                         <option value="Sudah">Sudah Lunas</option>

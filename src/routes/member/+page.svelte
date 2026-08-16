@@ -2,10 +2,11 @@
     import toast, { Toaster } from 'svelte-french-toast';
     import { baseConfiguration } from "$lib/baseConfig";
     import Header from "../features/Header.svelte";
+    import MarketingSelect from "$lib/MarketingSelect.svelte";
     export let data;
     let newData:any = data.data;
     let currentCategory:string  = 'SEMUA';
-    let staticData:any          = newData;
+    let currentNama:string      = '';
 
     let isModal:boolean     = false;
     let isDelete:boolean    = false;
@@ -17,22 +18,34 @@
     let provinsi:string;
     let whatsApp:number;
     let nomorKTP:number;
-    let pinATM:number;
+    let pinATM:number; 
     let jenisKelamin:string;
     let dataMarketing:string;
     let pekerjaan:string;
     let rekomendasiDari:string;
     let keterangan:string;
 
-    function changeCategory(ID:string){
-        newData             = staticData;
-        const dataFilter    = newData.filter((kategoriData:any) => kategoriData.MARKETING == ID );
-        newData             = dataFilter
-        if(ID == 'SEMUA'){
-            newData = staticData;
-        }
-        newData = newData;
-        return newData
+    /*
+    | Filtering happens on the server now. It used to pull the entire member table
+    | down and filter the array in the browser, which is why this page got slower
+    | as the co-op grew.
+    */
+    async function loadMembers(){
+        const params = new URLSearchParams();
+        if(currentNama) params.set('nama', currentNama);
+        if(currentCategory && currentCategory != 'SEMUA') params.set('marketing', currentCategory);
+
+        const doGet = await fetch(baseConfiguration.clientURL + 'Semua-Member?' + params.toString(), {
+            method : 'GET'
+        });
+        newData = await doGet.json();
+        return newData;
+    }
+
+    let searchTimer:ReturnType<typeof setTimeout>;
+    function onNamaInput(){
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadMembers, 300);
     }
 
     function doEdit(ID:number){
@@ -101,27 +114,21 @@
 <Header/>
 <div class="container mx-auto">
 
-    <div class="flex justify-between my-5">
+    <div class="flex justify-between my-5 gap-2">
         <h2 class="card-title">Member Koperasi Kosada</h2>
-        <select bind:value={currentCategory} on:change={() => changeCategory(currentCategory)} class="select select-info max-w-xs">
-            <option selected disabled>Pilih Data Marketing</option>
-            <option value="SEMUA">Tampilkan Semua Member</option>
-            <option value="TGL 25">TGL 25</option>
-            <option value="28 IM">28 IM</option>
-            <option value="28 AM">28 AM</option>
-            <option value="BCA 1">BCA 1</option>
-            <option value="BCA 2">BCA 2</option>
-            <option value="MAN 1">MAN 1</option>
-            <option value="MAN 2">MAN 2</option>
-            <option value="SAB/BRI">SAB/BRI</option>
-            <option value="CIMB">CIMB</option>
-            <option value="MJK">MJK</option>
-            <option value="YAKULT">YAKULT</option>
-            <option value="OPPO">OPPO</option>
-            <option value="U.LOKA">U.LOKA</option>
-            <option value="BNI">BNI</option>
-            <option value="JATIM">JATIM</option>
-        </select>
+        <div class="flex gap-2">
+            <input
+                type="search"
+                bind:value={currentNama}
+                on:input={onNamaInput}
+                placeholder="Cari nama.."
+                class="input input-bordered max-w-xs"/>
+            <MarketingSelect
+                bind:value={currentCategory}
+                includeSemua
+                semuaLabel="Tampilkan Semua Member"
+                on:change={loadMembers} />
+        </div>
       </div>
 
     <div class="card w-full bg-base-100 shadow-xl">
