@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
 /*
 | `marker` is the page's own heading, matched inside .card-title rather than
 | anywhere on the page. The nav renders every label twice — once for desktop and
-| once in a hidden mobile dropdown — so a bare getByText('Ganti Password') finds
+| once in a hidden mobile dropdown — so a bare getByText('Manajemen Akun') finds
 | the hidden nav link instead of the heading and fails on visibility.
 */
 const APP_ROUTES = [
@@ -28,7 +28,7 @@ const APP_ROUTES = [
     { path : '/data-macet',       marker : 'Data Kredit Macet' },
     { path : '/transfer-harian',  marker : 'Data Transfer Harian' },
     { path : '/surat-tugas',      marker : 'Surat Tugas' },
-    { path : '/ganti-password',   marker : 'Ganti Password' }
+    { path : '/akun',             marker : 'Manajemen Akun' }
 ];
 
 const PRINT_ROUTES = [

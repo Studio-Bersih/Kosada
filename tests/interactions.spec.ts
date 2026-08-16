@@ -124,27 +124,52 @@ test.describe('Tambah Kredit', () => {
     });
 });
 
-test.describe('Ganti Password', () => {
-    test('warns that the account is shared and validates before submitting', async ({ page }) => {
-        await page.goto('/ganti-password');
-        await page.waitForLoadState('networkidle');
-
-        await expect(page.getByText(/digunakan bersama oleh seluruh staf/)).toBeVisible();
-
-        const submit = page.getByRole('button', { name : /Simpan Password Baru/ });
-        await expect(submit).toBeDisabled();
-    });
-});
-
 test.describe('Navigation', () => {
     test('every nav destination is reachable', async ({ page }) => {
         // The nav renders each link twice (desktop + hidden mobile dropdown), so
         // target the visible one rather than whichever comes first in the DOM.
-        for(const href of ['/member','/report','/data-macet','/transfer-harian','/ganti-password']){
+        for(const href of ['/member','/report','/data-macet','/transfer-harian']){
             await page.goto('/dashboard');
             await page.waitForLoadState('networkidle');
             await page.locator(`a[href="${href}"]`).filter({ visible : true }).first().click();
             await expect(page).toHaveURL(new RegExp(href.replace('/','\\/')));
         }
+    });
+});
+
+test.describe('Manajemen Akun', () => {
+    /*
+    | Role checks in the UI decide what is SHOWN. The real enforcement is
+    | server-side and is covered by the backend tests; these assert that the
+    | interface tells the truth about it.
+    */
+    async function signInAs(page:any, privilege:string){
+        await page.goto('/dashboard');
+        await page.evaluate((p:string) => localStorage.setItem('kosada.account',
+            JSON.stringify({ email:'someone@kosada.id', name:'Tester', privilege:p })), privilege);
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+    }
+
+    test('Staff does not see Manajemen Akun in the nav', async ({ page }) => {
+        await signInAs(page, 'Staff');
+        await expect(page.locator('a[href="/akun"]')).toHaveCount(0);
+        // Everything else stays reachable — Staff can use the rest of the system.
+        await expect(page.locator('a[href="/dashboard"]').first()).toBeVisible();
+        await expect(page.locator('a[href="/member"]').first()).toBeVisible();
+    });
+
+    test('Administrator sees Manajemen Akun', async ({ page }) => {
+        await signInAs(page, 'Administrator');
+        await expect(page.locator('a[href="/akun"]').first()).toBeVisible();
+    });
+
+    test('Staff on /akun can read the list but gets no actions', async ({ page }) => {
+        await signInAs(page, 'Staff');
+        await page.goto('/akun');
+        await page.waitForLoadState('networkidle');
+
+        await expect(page.getByText(/hanya untuk akun/)).toBeVisible();
+        await expect(page.getByRole('button', { name : /Tambah Akun/ })).toHaveCount(0);
     });
 });

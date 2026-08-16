@@ -14,13 +14,14 @@
     import { page } from '$app/stores';
     import Icon from '$lib/Icon.svelte';
     import { theme } from '$lib/theme';
-    import { getAccount, clearAccount, type KosadaAccount } from '$lib/session';
+    import { getAccount, clearAccount, isAdmin, type KosadaAccount } from '$lib/session';
 
     const COLLAPSE_KEY = 'kosada.sidebar.collapsed';
 
     let collapsed = false;
     let mobileOpen = false;
     let account:KosadaAccount | null = null;
+    let admin = false;
 
     /*
     | Grouped by job rather than listed flat: the two pages staff open every day
@@ -54,14 +55,23 @@
             label : 'LAIN',
             items : [
                 { href : '/surat-tugas',    label : 'Surat Tugas',    icon : 'surat'    },
-                { href : '/ganti-password', label : 'Ganti Password', icon : 'password' }
+                // Administrator only. This hides the link; the server is what
+                // actually refuses a Staff account.
+                { href : '/akun',           label : 'Manajemen Akun', icon : 'members',  adminOnly : true }
             ]
         }
     ];
 
+    // Groups with nothing visible for this role are dropped, so a Staff user
+    // doesn't get an empty "LAIN" heading with one item under it.
+    $: visibleGroups = GROUPS
+        .map(g => ({ ...g, items : g.items.filter(i => !(i as any).adminOnly || admin) }))
+        .filter(g => g.items.length > 0);
+
     onMount(() => {
         theme.init();
         account = getAccount();
+        admin   = isAdmin(account);
         try { collapsed = localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { /* ignore */ }
     });
 
@@ -145,7 +155,7 @@
 
     <!-- Nav -->
     <nav class="flex-1 overflow-y-auto py-2">
-        {#each GROUPS as group}
+        {#each visibleGroups as group}
             {#if group.label && !collapsed}
                 <p class="px-4 pt-4 pb-1 text-[0.65rem] font-semibold tracking-widest text-muted">
                     {group.label}

@@ -36,7 +36,8 @@
             const doResponse = await doPost.json();
 
             if(doResponse.status == 'Authenticated'){
-                // Remembered only so Ganti Password knows whose password to change.
+                // Remembered so the nav knows which items to show and Manajemen
+                // Akun knows who is acting.
                 // This is not a session — see $lib/session.ts.
                 saveAccount({
                     email     : doResponse.email ?? email,
