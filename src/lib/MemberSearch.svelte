@@ -71,7 +71,11 @@
     {/if}
 
     {#if results.length > 0}
-        <ul class="menu bg-base-100 rounded-box shadow-lg absolute top-full left-0 right-0 z-30 max-h-60 flex-nowrap overflow-y-auto">
+        <!-- Drops in rather than appearing, so it reads as attached to the input
+             it came from. Deliberately the shortest duration in the app: this
+             fires while the user is still typing. -->
+        <ul class="menu bg-base-100 rounded-box shadow-lg absolute top-full left-0 right-0 z-30 max-h-60 flex-nowrap overflow-y-auto border border-base-300"
+            style="animation: kosada-rise var(--dur-instant) var(--ease-out) both;">
             {#each results as member}
                 <li>
                     <button type="button" on:click={() => pick(member)} class="flex flex-col items-start gap-0">

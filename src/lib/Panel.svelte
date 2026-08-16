@@ -15,7 +15,15 @@
     export { klass as class };
 </script>
 
-<section class="bg-base-100 border border-base-300 rounded-xl overflow-hidden {klass}">
+<!--
+  | Panels rise in slightly after the page header, so the page assembles
+  | top-down rather than everything appearing at once. 60ms is below the ~100ms
+  | threshold where a delay stops feeling like sequence and starts feeling like
+  | waiting.
+-->
+<section
+    class="bg-base-100 border border-base-300 rounded-xl overflow-hidden {klass}"
+    style="animation: kosada-rise var(--dur-base) var(--ease-out) 60ms both;">
     <div class={flush ? '' : 'p-4 lg:p-5'}>
         <slot />
     </div>

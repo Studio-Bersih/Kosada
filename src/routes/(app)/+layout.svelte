@@ -9,6 +9,7 @@
     |
     | The (app) group affects file layout only — every URL is unchanged.
     */
+    import { page } from '$app/stores';
     import Sidebar from '$lib/Sidebar.svelte';
     import Toaster from '$lib/Toaster.svelte';
 </script>
@@ -26,6 +27,15 @@
       | and otherwise sits on top of the page heading.
     -->
     <main class="flex-1 min-w-0 pt-14 lg:pt-0 px-3 lg:px-0">
-        <slot />
+        <!--
+          | Keyed on the pathname so the entrance animation replays on every
+          | navigation. This is what browsers without the View Transitions API
+          | get; where the API is supported the two simply layer.
+        -->
+        {#key $page.url.pathname}
+            <div class="page-enter">
+                <slot />
+            </div>
+        {/key}
     </main>
 </div>

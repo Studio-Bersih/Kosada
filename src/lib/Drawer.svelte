@@ -29,18 +29,26 @@
 
 {#if open}
     <!-- Scrim. A button so Escape isn't the only way out and screen readers get
-         a real control rather than a clickable div. -->
+         a real control rather than a clickable div. Fades rather than appearing,
+         so the panel looks like it is carrying the backdrop in with it. -->
     <button
         type="button"
         class="fixed inset-0 bg-black/40 z-40 no-print"
+        style="animation: kosada-fade var(--dur-fast) var(--ease-out) both;"
         aria-label="Tutup panel"
         on:click={close}></button>
 {/if}
 
+<!--
+  | Slides on transform only, so the whole panel is composited and the
+  | installment table inside it does not re-layout on a single frame.
+-->
 <aside
     class="fixed inset-y-0 right-0 z-50 w-full {width} bg-base-100 border-l border-base-300
-           shadow-2xl flex flex-col transition-transform duration-200 no-print
+           shadow-2xl flex flex-col no-print
            {open ? 'translate-x-0' : 'translate-x-full pointer-events-none'}"
+    style="transition: transform var(--dur-slow) var(--ease-out);
+           will-change: {open ? 'transform' : 'auto'};"
     aria-hidden={!open}>
 
     <div class="flex items-start justify-between gap-4 px-5 py-4 border-b border-base-300 shrink-0">

@@ -107,6 +107,64 @@
     --noise: 0;
 }
 
+/*
+| Motion.
+|
+| Every duration here is between 120ms and 260ms. Anything slower stops reading
+| as responsiveness and starts reading as lag — on an internal tool people use
+| all day, a 400ms page transition is something they wait through forty times an
+| hour.
+|
+| Only `transform` and `opacity` are animated. Those two are composited on the
+| GPU and never trigger layout; animating width/height/top/left forces a reflow
+| on every frame and produces exactly the jank this is meant to avoid. The one
+| deliberate exception is the sidebar rail, noted where it happens.
+|
+| Easing is asymmetric on purpose: things enter fast and settle (ease-out), and
+| leave quickly (ease-in). Entrances that ease-in feel sluggish because the
+| slowest part is at the start, where the eye is already looking.
+*/
+:root {
+    --ease-out   : cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+    --dur-instant: 120ms;
+    --dur-fast   : 160ms;
+    --dur-base   : 200ms;
+    --dur-slow   : 260ms;
+}
+
+/*
+| Honour the OS setting. This is not optional — motion can trigger nausea and
+| vestibular symptoms, and "fluid" is not worth making someone ill. Everything
+| still works; it just arrives instead of sliding.
+*/
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}
+
+@keyframes kosada-rise {
+    from { opacity: 0; transform: translate3d(0, 6px, 0); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes kosada-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 @layer base {
     html {
         font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
@@ -183,6 +241,135 @@
         @apply text-right whitespace-nowrap;
         font-variant-numeric: tabular-nums;
     }
+
+    /*
+    | Page content arriving. Applied by the (app) layout, keyed on the route, so
+    | it replays on every navigation.
+    */
+    .page-enter {
+        animation: kosada-rise var(--dur-base) var(--ease-out) both;
+    }
+
+    /*
+    | Table rows arriving, staggered.
+    |
+    | The stagger is capped at ten rows and 12ms apart, so a full page of 25 rows
+    | finishes in ~120ms rather than 300ms+. Beyond about ten steps a stagger
+    | stops reading as "arriving together" and starts reading as "loading slowly",
+    | which is the opposite of the point.
+    */
+    .table-kosada tbody tr {
+        animation: kosada-rise var(--dur-fast) var(--ease-out) both;
+    }
+    .table-kosada tbody tr:nth-child(1)  { animation-delay: 0ms }
+    .table-kosada tbody tr:nth-child(2)  { animation-delay: 12ms }
+    .table-kosada tbody tr:nth-child(3)  { animation-delay: 24ms }
+    .table-kosada tbody tr:nth-child(4)  { animation-delay: 36ms }
+    .table-kosada tbody tr:nth-child(5)  { animation-delay: 48ms }
+    .table-kosada tbody tr:nth-child(6)  { animation-delay: 60ms }
+    .table-kosada tbody tr:nth-child(7)  { animation-delay: 72ms }
+    .table-kosada tbody tr:nth-child(8)  { animation-delay: 84ms }
+    .table-kosada tbody tr:nth-child(9)  { animation-delay: 96ms }
+    .table-kosada tbody tr:nth-child(n+10) { animation-delay: 108ms }
+
+    /* Rows already have a colour transition; keep it quick so hover feels live. */
+    .table-kosada tbody tr {
+        transition: background-color var(--dur-instant) var(--ease-out);
+    }
+
+    /*
+    | No row stagger inside a slide-over.
+    |
+    | The drawer slides while its installment table renders, and running ten
+    | staggered row animations on top of that measurably dropped frames — 42 of
+    | them on open. The panel is already moving; the rows inside it do not need
+    | their own entrance, and suppressing them removes the compounding.
+    */
+    aside .table-kosada tbody tr {
+        animation: none;
+    }
+}
+
+/*
+| Interaction feedback.
+|
+| Outside @layer so these win over daisyUI's own component styles without
+| needing !important.
+*/
+.btn,
+.input,
+.select,
+.textarea {
+    transition:
+        background-color var(--dur-instant) var(--ease-out),
+        border-color     var(--dur-instant) var(--ease-out),
+        color            var(--dur-instant) var(--ease-out),
+        box-shadow       var(--dur-instant) var(--ease-out),
+        transform        var(--dur-instant) var(--ease-out);
+}
+
+/* A press should feel like a press. 1px is enough to register and small enough
+   never to shift surrounding layout. */
+.btn:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.btn:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+/* Links and sidebar items. */
+a, .link {
+    transition: color var(--dur-instant) var(--ease-out),
+                background-color var(--dur-instant) var(--ease-out);
+}
+
+/*
+| Cross-page transitions via the View Transitions API.
+|
+| Where supported this morphs between routes instead of cutting; elsewhere the
+| navigation is instant and the .page-enter animation still runs, so nothing is
+| lost. Kept to a short cross-fade — a sliding whole-page transition is the kind
+| of thing that looks good once and irritates by the fiftieth navigation.
+*/
+::view-transition-old(root) {
+    animation: kosada-fade var(--dur-instant) var(--ease-out) reverse;
+}
+::view-transition-new(root) {
+    animation: kosada-fade var(--dur-fast) var(--ease-out);
+}
+
+/*
+| Confirmation modals.
+|
+| daisyUI toggles .modal-open, which flips visibility with no motion of its own.
+| These are the surfaces that SHOULD interrupt, so they scale in from slightly
+| under full size — a movement the eye catches without it being slow.
+*/
+.modal {
+    transition: opacity var(--dur-fast) var(--ease-out),
+                visibility var(--dur-fast) var(--ease-out);
+}
+.modal .modal-box {
+    transition: transform var(--dur-fast) var(--ease-out),
+                opacity   var(--dur-fast) var(--ease-out);
+    transform: scale(0.97) translateY(4px);
+    opacity: 0;
+}
+.modal.modal-open .modal-box {
+    transform: none;
+    opacity: 1;
+}
+
+/*
+| Skeleton shimmer.
+|
+| daisyUI ships .skeleton with its own pulse. Slowing it down deliberately: a
+| fast pulse reads as urgency, and this is meant to say "in a moment", not
+| "something is wrong".
+*/
+.skeleton {
+    animation-duration: 1.6s;
 }
 
 @media print {
