@@ -141,7 +141,7 @@
                         </label>
                         <select bind:value={timePeriod} class="select select-bordered w-full max-w-lg" required>
                             <option disabled selected>Pilih Jangka Waktu</option>
-                            {#each Array(20) as loop,index }
+                            {#each Array(24) as loop,index }
                                 <option value="{index + 1}">{index + 1} Bulan</option>
                             {/each}
                         </select>
