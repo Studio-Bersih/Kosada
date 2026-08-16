@@ -12,11 +12,14 @@
     let currentCategory:string  = 'SEMUA';
     let currentNama:string      = '';
 
+    let page:number             = 1;
+    let meta:any                = { page : 1, per_page : 25, total : 0, last_page : 1 };
+
     // Debounce the name box so typing doesn't fire a request per keystroke.
     let searchTimer:ReturnType<typeof setTimeout>;
     function onNamaInput(){
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(doPost, 300);
+        searchTimer = setTimeout(applyFilters, 300);
     }
 
     type Form = Record<"start" | "end", string>;
@@ -52,17 +55,32 @@
                 start: useDate.start,
                 end: useDate.end,
                 kategori: currentCategory,
-                nama: currentNama
+                nama: currentNama,
+                page: page,
+                per_page: meta.per_page
             })
         });
 
         isLoading = false;
 
         const doResponse = await doPost.json();
-        newData = doResponse;
-        newData = newData;
+        newData = doResponse.data ?? [];
+        meta    = doResponse.meta ?? meta;
 
         await loadStatusMacet();
+    }
+
+    // Any change to the filters resets to page 1 — staying on page 12 of a
+    // different result set is never what the user meant.
+    function applyFilters(){
+        page = 1;
+        return doPost();
+    }
+
+    function gotoPage(n:number){
+        if(n < 1 || n > meta.last_page || n === meta.page) return;
+        page = n;
+        doPost();
     }
 
     /*
@@ -214,7 +232,7 @@
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
             
-            <form on:submit|preventDefault={doPost} class="flex justify-between">
+            <form on:submit|preventDefault={applyFilters} class="flex justify-between">
                 <div class="form-control w-full max-w-md">
                     <label for="cariNama" class="label">
                         <span class="label-text">Cari Nama</span>
@@ -286,7 +304,7 @@
                         {/if}
                         {#each newData as data,index }
                             <tr class="hover">
-                                <td>{index + 1}</td>
+                                <td>{ (meta.page - 1) * meta.per_page + index + 1 }</td>
                                 <td>{data.CREATED_AT}</td>
                                 <td>{data.NAMA}</td>
                                 <td>{data.MARKETING}</td>
@@ -308,6 +326,27 @@
                         {/each}
                     </tbody>
                 </table>
+            </div>
+
+            <div class="flex justify-between items-center flex-wrap gap-2">
+                <span class="text-sm opacity-70">
+                    {meta.total} data · halaman {meta.page} dari {meta.last_page}
+                </span>
+
+                <div class="flex items-center gap-2">
+                    <select bind:value={meta.per_page} on:change={applyFilters} class="select select-bordered select-sm">
+                        <option value={25}>25 / halaman</option>
+                        <option value={50}>50 / halaman</option>
+                        <option value={100}>100 / halaman</option>
+                    </select>
+                    <div class="join">
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1 || isLoading} on:click={() => gotoPage(1)}>«</button>
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1 || isLoading} on:click={() => gotoPage(meta.page - 1)}>‹</button>
+                        <button type="button" class="join-item btn btn-sm">{meta.page}</button>
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page || isLoading} on:click={() => gotoPage(meta.page + 1)}>›</button>
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page || isLoading} on:click={() => gotoPage(meta.last_page)}>»</button>
+                    </div>
+                </div>
             </div>
 
         </div>

@@ -5,8 +5,10 @@
     import MarketingSelect from "$lib/MarketingSelect.svelte";
     export let data;
     let newData:any = data.data;
+    let meta:any    = data.meta;
     let currentCategory:string  = 'SEMUA';
     let currentNama:string      = '';
+    let page:number             = 1;
 
     let isModal:boolean     = false;
     let isDelete:boolean    = false;
@@ -31,21 +33,38 @@
     | as the co-op grew.
     */
     async function loadMembers(){
-        const params = new URLSearchParams();
+        const params = new URLSearchParams({
+            page     : String(page),
+            per_page : String(meta.per_page)
+        });
         if(currentNama) params.set('nama', currentNama);
         if(currentCategory && currentCategory != 'SEMUA') params.set('marketing', currentCategory);
 
         const doGet = await fetch(baseConfiguration.clientURL + 'Semua-Member?' + params.toString(), {
             method : 'GET'
         });
-        newData = await doGet.json();
+        const doResponse = await doGet.json();
+        newData = doResponse.data ?? [];
+        meta    = doResponse.meta ?? meta;
         return newData;
+    }
+
+    // Filter changes always return to page 1.
+    function applyFilters(){
+        page = 1;
+        return loadMembers();
+    }
+
+    function gotoPage(n:number){
+        if(n < 1 || n > meta.last_page || n === meta.page) return;
+        page = n;
+        loadMembers();
     }
 
     let searchTimer:ReturnType<typeof setTimeout>;
     function onNamaInput(){
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(loadMembers, 300);
+        searchTimer = setTimeout(applyFilters, 300);
     }
 
     function doEdit(ID:number){
@@ -127,7 +146,7 @@
                 bind:value={currentCategory}
                 includeSemua
                 semuaLabel="Tampilkan Semua Member"
-                on:change={loadMembers} />
+                on:change={applyFilters} />
         </div>
       </div>
 
@@ -149,9 +168,12 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {#if newData.length === 0}
+                            <tr><td colspan="9" class="text-center py-6">Tidak ada data anggota.</td></tr>
+                        {/if}
                         {#each newData as data,index }
                             <tr>
-                                <td>{index + 1}</td>
+                                <td>{ (meta.page - 1) * meta.per_page + index + 1 }</td>
                                 <td>{data.NAMA}</td>
                                 <td>{data.ALAMAT}</td>
                                 <td>{data.KOTA}</td>
@@ -175,6 +197,27 @@
                         {/each}
                     </tbody>
                 </table>
+            </div>
+
+            <div class="flex justify-between items-center flex-wrap gap-2 mt-4">
+                <span class="text-sm opacity-70">
+                    {meta.total} anggota · halaman {meta.page} dari {meta.last_page}
+                </span>
+
+                <div class="flex items-center gap-2">
+                    <select bind:value={meta.per_page} on:change={applyFilters} class="select select-bordered select-sm">
+                        <option value={25}>25 / halaman</option>
+                        <option value={50}>50 / halaman</option>
+                        <option value={100}>100 / halaman</option>
+                    </select>
+                    <div class="join">
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1} on:click={() => gotoPage(1)}>«</button>
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page <= 1} on:click={() => gotoPage(meta.page - 1)}>‹</button>
+                        <button type="button" class="join-item btn btn-sm">{meta.page}</button>
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page} on:click={() => gotoPage(meta.page + 1)}>›</button>
+                        <button type="button" class="join-item btn btn-sm" disabled={meta.page >= meta.last_page} on:click={() => gotoPage(meta.last_page)}>»</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
