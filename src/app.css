@@ -1,10 +1,166 @@
 /*
 | Tailwind 4 is configured here, not in tailwind.config.js — that file and
-| postcss.config.js were both deleted in the upgrade. Content scanning is
+| postcss.config.js were both deleted in the Phase A upgrade. Content scanning is
 | automatic; the plugin finds the source files itself.
 */
 @import "tailwindcss";
-@plugin "daisyui";
+
+/* Self-hosted: no external request, nothing to break if a CDN is unreachable. */
+@import "@fontsource/plus-jakarta-sans/400.css";
+@import "@fontsource/plus-jakarta-sans/500.css";
+@import "@fontsource/plus-jakarta-sans/600.css";
+@import "@fontsource/plus-jakarta-sans/700.css";
+
+@plugin "daisyui" {
+    themes: false;
+}
+
+/*
+| Warm Sand & Terracotta.
+|
+| base-100 is the raised surface (cards, the sidebar), base-200 is the page
+| behind them, base-300 is borders and hover. daisyUI paints <body> with
+| base-100, so the body override further down moves it to base-200 — otherwise
+| cards would be the same colour as the page and the whole layout would go flat.
+*/
+@plugin "daisyui/theme" {
+    name: "kosada-light";
+    default: true;
+    prefersdark: false;
+    color-scheme: light;
+
+    --color-base-100: #FFFFFF;
+    --color-base-200: #FAF9F5;
+    --color-base-300: #E5E2D9;
+    --color-base-content: #1F1E1D;
+
+    --color-primary: #C96442;
+    --color-primary-content: #FFFFFF;
+
+    --color-secondary: #6B6862;
+    --color-secondary-content: #FFFFFF;
+
+    --color-accent: #C96442;
+    --color-accent-content: #FFFFFF;
+
+    --color-neutral: #1F1E1D;
+    --color-neutral-content: #FAF9F5;
+
+    --color-info: #4A6E8A;
+    --color-info-content: #FFFFFF;
+    --color-success: #5A7D5A;
+    --color-success-content: #FFFFFF;
+    --color-warning: #C08A2E;
+    --color-warning-content: #FFFFFF;
+    --color-error: #B54A3A;
+    --color-error-content: #FFFFFF;
+
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+    name: "kosada-dark";
+    default: false;
+    prefersdark: true;
+    color-scheme: dark;
+
+    --color-base-100: #30302E;
+    --color-base-200: #262624;
+    --color-base-300: #45443F;
+    --color-base-content: #F5F4EF;
+
+    --color-primary: #D97757;
+    --color-primary-content: #241A15;
+
+    --color-secondary: #A8A29A;
+    --color-secondary-content: #241A15;
+
+    --color-accent: #D97757;
+    --color-accent-content: #241A15;
+
+    --color-neutral: #F5F4EF;
+    --color-neutral-content: #262624;
+
+    --color-info: #7BA3C0;
+    --color-info-content: #16202A;
+    --color-success: #7FA57F;
+    --color-success-content: #16210F;
+    --color-warning: #D9A54A;
+    --color-warning-content: #241A05;
+    --color-error: #D96A58;
+    --color-error-content: #2A0F0A;
+
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
+
+@layer base {
+    html {
+        font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+        /* Currency columns must line up digit-for-digit. */
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: 'tnum' 1;
+    }
+
+    /* Cards sit on base-100; the page behind them is base-200. */
+    body {
+        background-color: var(--color-base-200);
+        color: var(--color-base-content);
+    }
+
+    /*
+    | The muted section labels in the sidebar and the "N data · halaman X" style
+    | captions. Defined once so they can't drift page to page.
+    */
+    .text-muted {
+        color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+    }
+}
+
+@layer components {
+    /*
+    | Dense data tables. These are the heart of the app and its densest surface.
+    | Sticky headers matter because the loan and member lists are long enough
+    | that the column names scroll away.
+    */
+    .table-kosada {
+        @apply table table-sm w-full;
+    }
+    .table-kosada thead th {
+        @apply sticky top-0 z-10 bg-base-100 border-b border-base-300;
+        @apply text-xs font-semibold uppercase tracking-wide;
+        color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+    }
+    .table-kosada tbody tr:nth-child(even) {
+        background-color: color-mix(in oklab, var(--color-base-300) 28%, transparent);
+    }
+    .table-kosada tbody tr:hover {
+        background-color: color-mix(in oklab, var(--color-primary) 8%, transparent);
+    }
+    .table-kosada td,
+    .table-kosada th {
+        @apply py-2;
+    }
+
+    /* Currency and any figure that belongs in a column. */
+    .num {
+        @apply text-right whitespace-nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+}
 
 @media print {
     .no-print {
@@ -44,7 +200,10 @@
         page-break-inside: avoid;
     }
 
-    /* Print black on white regardless of the active theme. */
+    /*
+    | Print black on white regardless of the active theme — printing must stay
+    | ink-cheap. This deliberately overrides the sticky/zebra treatment above.
+    */
     .print-sheet,
     .print-sheet * {
         color: #000 !important;
@@ -54,5 +213,8 @@
     .print-sheet th,
     .print-sheet td {
         border-color: #999 !important;
+    }
+    .print-sheet thead th {
+        position: static !important;
     }
 }

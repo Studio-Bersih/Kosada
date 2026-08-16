@@ -25,7 +25,7 @@ test.describe('Dashboard', () => {
         await page.waitForTimeout(600);
         await expect(cari).toHaveValue('budi');
 
-        await page.getByRole('button', { name : /Mulai Pencarian|Mencari/ }).click();
+        await page.getByRole('button', { name : /^Cari$|Mencari/ }).click();
         await expect(page).toHaveURL(/\/dashboard/);
         await expect(page.locator('table').first()).toBeVisible();
     });

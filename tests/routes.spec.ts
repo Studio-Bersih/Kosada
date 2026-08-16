@@ -19,7 +19,7 @@ import { test, expect } from '@playwright/test';
 | the hidden nav link instead of the heading and fails on visibility.
 */
 const APP_ROUTES = [
-    { path : '/',                 marker : 'Sign In' },
+    { path : '/',                 marker : 'Masuk' },
     { path : '/dashboard',        marker : 'Data Pinjaman' },
     { path : '/member',           marker : 'Member Koperasi Kosada' },
     { path : '/tambah-member',    marker : 'Penambahan Member Baru' },

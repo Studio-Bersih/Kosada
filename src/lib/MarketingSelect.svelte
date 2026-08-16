@@ -11,7 +11,7 @@
      * is a query keyword, not a real marketing, and saving it would corrupt the row.
      */
     import { createEventDispatcher } from 'svelte';
-    import { marketing } from '../strings/marketing';
+    import { marketing } from '$lib/strings/marketing';
 
     export let value: string | undefined = undefined;
     export let includeSemua = false;

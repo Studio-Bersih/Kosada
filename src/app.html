@@ -1,9 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			/*
+			| Apply the theme before first paint.
+			|
+			| Runs blocking in <head> on purpose: doing this from a component would
+			| render one frame of the light theme before switching, and that flash
+			| is the single most noticeable flaw in a dark mode. Kept deliberately
+			| tiny and dependency-free — it must not be able to throw.
+			|
+			| Mirrors $lib/theme.ts. If the storage key changes, change it in both.
+			*/
+			(function () {
+				try {
+					var stored = localStorage.getItem('kosada.theme');
+					var dark = stored
+						? stored === 'kosada-dark'
+						: window.matchMedia('(prefers-color-scheme: dark)').matches;
+					document.documentElement.setAttribute('data-theme', dark ? 'kosada-dark' : 'kosada-light');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'kosada-light');
+				}
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

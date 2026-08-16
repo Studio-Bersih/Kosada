@@ -28,7 +28,7 @@
 		"vite": "^7.1.14"
 	},
 	"dependencies": {
-		"@fontsource/plus-jakarta-sans": "^5.2.8",
+		"@fontsource/plus-jakarta-sans": "^5.3.0",
 		"svelte-sonner": "^1.2.1"
 	},
 	"type": "module"
