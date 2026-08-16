@@ -10,7 +10,7 @@
     import { page } from '$app/stores';
     import { baseConfiguration } from '$lib/baseConfig';
     import { rupiahFormatter } from '$lib/formatter';
-    import { normalizeList } from '$lib/apiList';
+    import { readListAll } from '$lib/apiList';
     import Letterhead from '$lib/Letterhead.svelte';
 
     let rows:any = [];
@@ -69,7 +69,8 @@
                 });
             }
 
-            rows = normalizeList(await doPost.json(), 25, 'Report/Print').data;
+            // readListAll, not normalizeList: a print sheet must carry every row.
+            rows = readListAll(await doPost.json());
         } catch {
             failed = true;
         }

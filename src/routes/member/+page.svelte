@@ -44,7 +44,11 @@
         const doGet = await fetch(baseConfiguration.clientURL + 'Semua-Member?' + params.toString(), {
             method : 'GET'
         });
-        const list = normalizeList(await doGet.json(), meta.per_page, 'Semua-Member');
+        const list = normalizeList(await doGet.json(), {
+            page    : page,
+            perPage : meta.per_page,
+            label   : 'Semua-Member'
+        });
         newData = list.data;
         meta    = list.meta;
         return newData;

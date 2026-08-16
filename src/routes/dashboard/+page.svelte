@@ -3,31 +3,38 @@
     import MarketingSelect from "$lib/MarketingSelect.svelte";
     import { initializeDate, rupiahFormatter } from "$lib/formatter";
     import { baseConfiguration } from "$lib/baseConfig";
-    import { normalizeList } from "$lib/apiList";
+    import { normalizeList, readJsonArray } from "$lib/apiList";
     import toast, { Toaster } from 'svelte-french-toast';
     import { onMount } from "svelte";
 
     // export let data;
 
     let newData:any             = [];
-    let currentCategory:string  = 'SEMUA';
-    let currentNama:string      = '';
 
     let page:number             = 1;
     let meta:any                = { page : 1, per_page : 25, total : 0, last_page : 1 };
 
-    // Debounce the name box so typing doesn't fire a request per keystroke.
-    let searchTimer:ReturnType<typeof setTimeout>;
-    function onNamaInput(){
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(applyFilters, 300);
-    }
-
     type Form = Record<"start" | "end", string>;
-    let useDate: Form = {
-        start: initializeDate("first"),
-        end: initializeDate("last")
-    }
+
+    /*
+    | Two sets of filter values.
+    |
+    | `form` is what the user is currently typing. `applied` is what the table is
+    | actually showing. Nothing queries until the form is submitted, and paging
+    | uses `applied` — so clicking page 2 after typing a half-finished name gives
+    | you page 2 of what is on screen, not page 2 of something you never searched.
+    */
+    let form = {
+        nama     : '',
+        kategori : 'SEMUA',
+        date     : { start : initializeDate("first"), end : initializeDate("last") } as Form
+    };
+
+    let applied = {
+        nama     : form.nama,
+        kategori : form.kategori,
+        date     : { ...form.date }
+    };
 
     let isLoading: boolean = false;
 
@@ -49,31 +56,45 @@
 
     async function doPost(): Promise <void>{
         isLoading = true;
-        const doPost = await fetch(baseConfiguration.clientURL + 'Realisasi-Kredit-Range', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                start: useDate.start,
-                end: useDate.end,
-                kategori: currentCategory,
-                nama: currentNama,
-                page: page,
-                per_page: meta.per_page
-            })
-        });
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Realisasi-Kredit-Range', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    start: applied.date.start,
+                    end: applied.date.end,
+                    kategori: applied.kategori,
+                    nama: applied.nama,
+                    page: page,
+                    per_page: meta.per_page
+                })
+            });
 
+            const list = normalizeList(await doPost.json(), {
+                page    : page,
+                perPage : meta.per_page,
+                label   : 'Realisasi-Kredit-Range'
+            });
+            newData = list.data;
+            meta    = list.meta;
+
+            await loadStatusMacet();
+        } catch {
+            toast.error('Ada masalah pada server', { position : 'top-right' });
+        }
         isLoading = false;
-
-        const list = normalizeList(await doPost.json(), meta.per_page, 'Realisasi-Kredit-Range');
-        newData = list.data;
-        meta    = list.meta;
-
-        await loadStatusMacet();
     }
 
-    // Any change to the filters resets to page 1 — staying on page 12 of a
-    // different result set is never what the user meant.
+    /*
+    | Runs only when the form is submitted — the search boxes deliberately do not
+    | query as you type.
+    */
     function applyFilters(){
+        applied = {
+            nama     : form.nama,
+            kategori : form.kategori,
+            date     : { ...form.date }
+        };
         page = 1;
         return doPost();
     }
@@ -100,7 +121,13 @@
                 headers : { 'Content-Type' : 'application/json' },
                 body    : JSON.stringify({ IDS : newData.map((d:any) => d.ID) })
             });
-            macetIDs = await doPost.json();
+
+            /*
+            | readJsonArray, not .json(): on a backend without this route the 404
+            | body is {"message":"..."} — an object. Assigning that here made
+            | `macetIDs.includes(...)` throw when a detail modal opened.
+            */
+            macetIDs = await readJsonArray(doPost, 'Status-Macet');
         } catch {
             // Non-fatal: worst case the button shows when a badge would do, and
             // the backend still refuses the duplicate.
@@ -241,9 +268,8 @@
                     <input
                         id="cariNama"
                         type="search"
-                        bind:value={currentNama}
-                        on:input={onNamaInput}
-                        placeholder="Ketik nama nasabah.."
+                        bind:value={form.nama}
+                        placeholder="Ketik nama, lalu tekan Cari"
                         class="input input-bordered max-w-xs"/>
                 </div>
 
@@ -251,21 +277,21 @@
                     <label for="pilihKategori" class="label">
                         <span class="label-text">Pilih Kategori</span>
                     </label>
-                    <MarketingSelect bind:value={currentCategory} includeSemua />
+                    <MarketingSelect bind:value={form.kategori} includeSemua />
                 </div>
 
                 <div class="form-control w-full max-w-md">
                     <label for="startDate" class="label">
                         <span class="label-text">Tanggal Mulai Pinjaman</span>
                     </label>
-                    <input type="date" bind:value={useDate.start} class="input"/>
+                    <input type="date" bind:value={form.date.start} class="input"/>
                 </div>
 
                 <div class="form-control w-full max-w-md">
                     <label for="end" class="label">
                         <span class="label-text">Tanggal Akhir Pinjaman</span>
                     </label>
-                    <input type="date" bind:value={useDate.end} class="input"/>
+                    <input type="date" bind:value={form.date.end} class="input"/>
                 </div>
 
                 <div class="form-control w-full max-w-md">

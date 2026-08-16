@@ -9,7 +9,7 @@ export const load = async ({fetch}) => {
     const doGet = await fetch(baseConfiguration.defaultURL + 'Semua-Member?page=1&per_page=25',{
         method      : 'GET',
     });
-    const list = normalizeList(await doGet.json(), 25, 'Semua-Member (SSR)');
+    const list = normalizeList(await doGet.json(), { page : 1, perPage : 25, label : 'Semua-Member (SSR)' });
     return {
         data : list.data,
         meta : list.meta,

@@ -38,7 +38,11 @@
                 per_page        : meta.per_page
             })
         });
-        const list = normalizeList(await doPost.json(), meta.per_page, 'Report');
+        const list = normalizeList(await doPost.json(), {
+            page    : page,
+            perPage : meta.per_page,
+            label   : 'Report'
+        });
         newData = list.data;
         meta    = list.meta;
         return newData;
