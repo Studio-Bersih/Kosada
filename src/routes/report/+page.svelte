@@ -1,5 +1,6 @@
 <script lang="ts">
-    import toast, { Toaster } from 'svelte-french-toast';
+    import toast from '$lib/toast';
+    import Toaster from '$lib/Toaster.svelte';
     import { baseConfiguration } from "$lib/baseConfig";
     import { rupiahFormatter } from "$lib/formatter";
     import Header from "../features/Header.svelte";

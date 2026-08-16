@@ -42,11 +42,13 @@
             <div class="overflow-auto">
                 <table class="table">
                     <thead class="font-bold">
-                        <th>#</th>
-                        <th>Nominal</th>
-                        <th>Jatuh Tempo</th>
-                        <th>Kasbon</th>
-                        <th>Status Lunas</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Nominal</th>
+                            <th>Jatuh Tempo</th>
+                            <th>Kasbon</th>
+                            <th>Status Lunas</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {#if newData.DETAIL === undefined}

@@ -1,6 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+| Tailwind 4 is configured here, not in tailwind.config.js — that file and
+| postcss.config.js were both deleted in the upgrade. Content scanning is
+| automatic; the plugin finds the source files itself.
+*/
+@import "tailwindcss";
+@plugin "daisyui";
 
 @media print {
     .no-print {

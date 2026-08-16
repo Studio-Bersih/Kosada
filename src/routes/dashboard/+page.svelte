@@ -4,7 +4,8 @@
     import { defaultDateRange, rupiahFormatter, tanggalIndonesia } from "$lib/formatter";
     import { baseConfiguration } from "$lib/baseConfig";
     import { normalizeList, readJsonArray } from "$lib/apiList";
-    import toast, { Toaster } from 'svelte-french-toast';
+    import toast from '$lib/toast';
+    import Toaster from '$lib/Toaster.svelte';
     import { onMount } from "svelte";
 
     // export let data;
@@ -466,12 +467,14 @@
         <div class="overflow-auto">
             <table class="table">
                 <thead class="font-bold">
-                    <th>#</th>
-                    <th>Nominal</th>
-                    <th>Jatuh Tempo</th>
-                    <th>Kasbon</th>
-                    <th>Total</th>
-                    <th>Status Lunas</th>
+                    <tr>
+                        <th>#</th>
+                        <th>Nominal</th>
+                        <th>Jatuh Tempo</th>
+                        <th>Kasbon</th>
+                        <th>Total</th>
+                        <th>Status Lunas</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {#if modalData.DETAIL === undefined}

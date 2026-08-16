@@ -1,5 +1,6 @@
 <script lang="ts">
-    import toast, { Toaster } from 'svelte-french-toast';
+    import toast from '$lib/toast';
+    import Toaster from '$lib/Toaster.svelte';
     import { baseConfiguration } from "$lib/baseConfig";
     import { goto } from '$app/navigation';
     import { saveAccount } from '$lib/session';
@@ -35,7 +36,7 @@
 </script>
 <Toaster/>
 <div class="bg-no-repeat bg-cover bg-center relative" style="background-image: url('/loginScreen.jpg');">
-    <div class="absolute bg-gradient-to-b from-green-500 to-green-400 opacity-75 inset-0 z-0" />
+    <div class="absolute bg-gradient-to-b from-green-500 to-green-400 opacity-75 inset-0 z-0"></div>
     <div class="min-h-screen sm:flex sm:flex-row mx-0 justify-center">
         <div class="flex-col flex self-center p-10 sm:max-w-5xl xl:max-w-2xl z-10" >
             <div class="self-start hidden lg:flex flex-col text-white">

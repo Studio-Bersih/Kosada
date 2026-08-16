@@ -1,6 +1,7 @@
 <script lang="ts">
     import { baseConfiguration } from "$lib/baseConfig";
-    import toast, { Toaster } from 'svelte-french-toast';
+    import toast from '$lib/toast';
+    import Toaster from '$lib/Toaster.svelte';
     import Header from "../features/Header.svelte";
     export let data;
     let newData:any = data.data;

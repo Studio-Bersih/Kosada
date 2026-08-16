@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import toast, { Toaster } from 'svelte-french-toast';
+    import toast from '$lib/toast';
+    import Toaster from '$lib/Toaster.svelte';
     import { baseConfiguration } from '$lib/baseConfig';
     import { getAccount } from '$lib/session';
     import Header from '../features/Header.svelte';
