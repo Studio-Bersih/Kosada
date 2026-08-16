@@ -1,5 +1,11 @@
 <script lang="ts">
+    import { clearAccount } from "$lib/session";
+
     function eraseAll(){
+      // Also drop the remembered account so Ganti Password doesn't prefill the
+      // previous user's email on a shared machine.
+      clearAccount();
+
       const cookies = document.cookie.split(";");
 
       for (let i = 0; i < cookies.length; i++) {
@@ -20,10 +26,15 @@
         </label>
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 font-bold">
-            <li><a href="/">Dashboard</a></li>
-            <li><a href="/">Tambah Anggota</a></li>
-            <li><a href="/">Tambah Kredit</a></li>
-            <li><a href="/">Realisasi Kredit</a></li>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/tambah-member">Tambah Anggota</a></li>
+            <li><a href="/tambah-kredit">Tambah Kredit</a></li>
+            <li><a href="/member">Anggota Koperasi</a></li>
+            <li><a href="/data-macet">Data Macet</a></li>
+            <li><a href="/transfer-harian">Transfer Harian</a></li>
+            <li><a href="/surat-tugas">Surat Tugas</a></li>
+            <li><a href="/report">Laporan</a></li>
+            <li><a href="/ganti-password">Ganti Password</a></li>
         </ul>
         </div>
         <a href="/" class="btn btn-ghost normal-case text-xl">Koperasi Kosada</a>
@@ -34,8 +45,11 @@
         <li><a href="/tambah-member">Tambah Anggota</a></li>
         <li><a href="/tambah-kredit">Tambah Kredit</a></li>
         <li><a href="/member">Anggota Koperasi</a></li>
+        <li><a href="/data-macet">Data Macet</a></li>
+        <li><a href="/transfer-harian">Transfer Harian</a></li>
         <li><a href="/surat-tugas">Surat Tugas</a></li>
         <li><a href="/report">Laporan</a></li>
+        <li><a href="/ganti-password">Ganti Password</a></li>
       </ul>
     </div>
     <div class="navbar-end">

@@ -2,6 +2,7 @@
     import toast, { Toaster } from 'svelte-french-toast';
     import { baseConfiguration } from "$lib/baseConfig";
     import { goto } from '$app/navigation';
+    import { saveAccount } from '$lib/session';
 
     let email:string;
     let password:string;
@@ -19,6 +20,13 @@
         const doResponse = await doPost.json();
         
         if(doResponse.status == 'Authenticated'){
+            // Remembered only so Ganti Password knows whose password to change.
+            // This is not a session — see $lib/session.ts.
+            saveAccount({
+                email     : doResponse.email ?? email,
+                name      : doResponse.name ?? '',
+                privilege : doResponse.privilege ?? ''
+            });
             return goto('/dashboard');
         }
         
