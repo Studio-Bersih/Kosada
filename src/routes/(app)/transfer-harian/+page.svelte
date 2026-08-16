@@ -5,6 +5,8 @@
     import { rupiahFormatter } from '$lib/formatter';
     import MemberSearch from '$lib/MemberSearch.svelte';
     import PageHeader from '$lib/PageHeader.svelte';
+    import AdminConfirm from '$lib/AdminConfirm.svelte';
+    import { getAccount, isAdmin, type KosadaAccount } from '$lib/session';
     import Panel from '$lib/Panel.svelte';
     import Icon from '$lib/Icon.svelte';
 
@@ -31,6 +33,17 @@
     let keterangan:string    = '';
     let isSaving             = false;
 
+    /*
+    | Deleting a transfer line is Administrator-only. The disabled button is only
+    | the visible half — Transfer@deleteTransfer re-verifies an administrator's
+    | password on the request, so a Staff account cannot delete by any route.
+    */
+    let account:KosadaAccount | null = null;
+    let admin = false;
+    let hapusTarget:any = null;
+    let isHapusOpen = false;
+    let isHapusBusy = false;
+
     async function load(){
         isLoading = true;
         try {
@@ -44,7 +57,11 @@
         isLoading = false;
     }
 
-    onMount(load);
+    onMount(() => {
+        account = getAccount();
+        admin   = isAdmin(account);
+        load();
+    });
 
     function onClearMember(){
         memberTerpilih = null;
@@ -122,17 +139,36 @@
         isSaving = false;
     }
 
-    async function hapus(ID:number){
-        const doPost = await fetch(baseConfiguration.clientURL + 'Hapus-Transfer',{
-            method  : 'POST',
-            headers : { 'Content-Type' : 'application/json' },
-            body    : JSON.stringify({ ID : ID })
-        });
-        const doResponse = await doPost.json();
-        doResponse.status == 'success'
-            ? toast.success(doResponse.message, { position : 'top-right' })
-            : toast.error(doResponse.message ?? 'Gagal menghapus', { position : 'top-right' });
-        await load();
+    function mintaHapus(row:any){
+        hapusTarget = row;
+        isHapusOpen = true;
+    }
+
+    async function hapus(event:CustomEvent<string>){
+        isHapusBusy = true;
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Hapus-Transfer',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({
+                    ID             : hapusTarget.ID,
+                    ADMIN_EMAIL    : account?.email ?? '',
+                    ADMIN_PASSWORD : event.detail
+                })
+            });
+            const doResponse = await doPost.json();
+
+            if(doResponse.status == 'success'){
+                toast.success(doResponse.message);
+                isHapusOpen = false;
+                await load();
+            } else {
+                toast.error(doResponse.message ?? 'Gagal menghapus');
+            }
+        } catch {
+            toast.error('Ada masalah pada server');
+        }
+        isHapusBusy = false;
     }
 
     $: printHref = '/transfer-harian/print?tanggal=' + tanggal;
@@ -267,7 +303,12 @@
                                     <td class="text-right whitespace-nowrap">{rupiahFormatter.format(row.NOMINAL)}</td>
                                     <td>{row.KETERANGAN ?? '-'}</td>
                                     <td>
-                                        <button type="button" class="btn btn-xs btn-ghost" on:click={() => hapus(row.ID)}>Hapus</button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-xs btn-ghost text-error"
+                                            disabled={!admin}
+                                            title={admin ? 'Hapus data transfer' : 'Hanya Administrator yang dapat menghapus'}
+                                            on:click={() => mintaHapus(row)}>Hapus</button>
                                     </td>
                                 </tr>
                             {/each}
@@ -286,3 +327,13 @@
             </div>
     </Panel>
 </div>
+
+<AdminConfirm
+    bind:open={isHapusOpen}
+    email={account?.email ?? ''}
+    busy={isHapusBusy}
+    confirmLabel="Hapus"
+    action={hapusTarget
+        ? `Hapus transfer ${hapusTarget.NAMA} sebesar ${rupiahFormatter.format(hapusTarget.NOMINAL)}. Baris ini akan hilang dari rekap hari itu.`
+        : ''}
+    on:confirm={hapus} />

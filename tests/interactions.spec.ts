@@ -173,3 +173,47 @@ test.describe('Manajemen Akun', () => {
         await expect(page.getByRole('button', { name : /Tambah Akun/ })).toHaveCount(0);
     });
 });
+
+test.describe('Administrator-only row actions', () => {
+    async function signInAs(page:any, privilege:string){
+        await page.goto('/dashboard');
+        await page.evaluate((p:string) => localStorage.setItem('kosada.account',
+            JSON.stringify({ email:'someone@kosada.id', name:'Tester', privilege:p })), privilege);
+    }
+
+    test('Transfer Harian: Hapus is disabled for Staff, enabled for Administrator', async ({ page }) => {
+        await signInAs(page, 'Staff');
+        await page.goto('/transfer-harian');
+        await page.waitForLoadState('networkidle');
+        const staffButtons = page.getByRole('button', { name : 'Hapus' });
+        if(await staffButtons.count() > 0){
+            await expect(staffButtons.first()).toBeDisabled();
+        }
+
+        await signInAs(page, 'Administrator');
+        await page.goto('/transfer-harian');
+        await page.waitForLoadState('networkidle');
+        const adminButtons = page.getByRole('button', { name : 'Hapus' });
+        if(await adminButtons.count() > 0){
+            await expect(adminButtons.first()).toBeEnabled();
+        }
+    });
+
+    test('Data Macet: Selesai is disabled for Staff, enabled for Administrator', async ({ page }) => {
+        await signInAs(page, 'Staff');
+        await page.goto('/data-macet?status=SEMUA');
+        await page.waitForLoadState('networkidle');
+        const staffButtons = page.getByRole('button', { name : 'Selesai' });
+        if(await staffButtons.count() > 0){
+            await expect(staffButtons.first()).toBeDisabled();
+        }
+
+        await signInAs(page, 'Administrator');
+        await page.goto('/data-macet?status=SEMUA');
+        await page.waitForLoadState('networkidle');
+        const adminButtons = page.getByRole('button', { name : 'Selesai' });
+        if(await adminButtons.count() > 0){
+            await expect(adminButtons.first()).toBeEnabled();
+        }
+    });
+});

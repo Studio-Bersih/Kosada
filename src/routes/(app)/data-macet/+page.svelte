@@ -6,6 +6,7 @@
     import MarketingSelect from '$lib/MarketingSelect.svelte';
     import { normalizeList } from '$lib/apiList';
     import PageHeader from '$lib/PageHeader.svelte';
+    import { getAccount, isAdmin, type KosadaAccount } from '$lib/session';
     import Panel from '$lib/Panel.svelte';
     import Icon from '$lib/Icon.svelte';
 
@@ -22,10 +23,22 @@
     let form    = { nama : '', marketing : 'SEMUA', status : 'Macet' };
     let applied = { nama : '', marketing : 'SEMUA', status : 'Macet' };
 
-    // Resolve dialog
+    /*
+    | Resolving a case is Administrator-only. The disabled button is the visible
+    | half; Macet@selesaiMacet re-verifies an administrator's password on the
+    | request, so a Staff account cannot close a case by any route.
+    |
+    | The password field lives in this same dialog rather than a second one — the
+    | reason and the confirmation are one decision, and two stacked modals for a
+    | single action is worse than the thing it guards.
+    */
     let isSelesai:boolean      = false;
     let selesaiTarget:any      = null;
     let alasanSelesai:string   = '';
+    let adminPassword:string   = '';
+    let isSelesaiBusy          = false;
+    let account:KosadaAccount | null = null;
+    let admin = false;
 
     async function load(){
         isLoading = true;
@@ -52,7 +65,11 @@
         isLoading = false;
     }
 
-    onMount(load);
+    onMount(() => {
+        account = getAccount();
+        admin   = isAdmin(account);
+        load();
+    });
 
     // Runs only on submit — this page no longer filters as you type.
     function applyFilters(){
@@ -70,28 +87,39 @@
     function openSelesai(row:any){
         selesaiTarget = row;
         alasanSelesai = '';
+        adminPassword = '';
         isSelesai     = true;
     }
 
     async function doSelesai(){
-        if(!alasanSelesai.trim()){
-            return toast.error('Alasan penyelesaian wajib diisi', { position : 'top-right' });
-        }
+        if(!alasanSelesai.trim()) return toast.error('Alasan penyelesaian wajib diisi');
+        if(!adminPassword)        return toast.error('Password administrator wajib diisi');
 
-        const doPost = await fetch(baseConfiguration.clientURL + 'Selesai-Macet',{
-            method  : 'POST',
-            headers : { 'Content-Type' : 'application/json' },
-            body    : JSON.stringify({ ID : selesaiTarget.ID, ALASAN_SELESAI : alasanSelesai })
-        });
-        const doResponse = await doPost.json();
+        isSelesaiBusy = true;
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Selesai-Macet',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({
+                    ID             : selesaiTarget.ID,
+                    ALASAN_SELESAI : alasanSelesai,
+                    ADMIN_EMAIL    : account?.email ?? '',
+                    ADMIN_PASSWORD : adminPassword
+                })
+            });
+            const doResponse = await doPost.json();
 
-        if(doResponse.status == 'success'){
-            toast.success(doResponse.message, { position : 'top-right' });
-            isSelesai = false;
-            await load();
-        } else {
-            toast.error(doResponse.message ?? 'Gagal menyimpan', { position : 'top-right' });
+            if(doResponse.status == 'success'){
+                toast.success(doResponse.message);
+                isSelesai = false;
+                await load();
+            } else {
+                toast.error(doResponse.message ?? 'Gagal menyimpan');
+            }
+        } catch {
+            toast.error('Ada masalah pada server');
         }
+        isSelesaiBusy = false;
     }
 
     // Built from `applied`, so the printout matches the table on screen rather
@@ -204,7 +232,12 @@
                                     </td>
                                     <td>
                                         {#if row.STATUS === 'Macet'}
-                                            <button type="button" class="btn btn-xs btn-ghost" on:click={() => openSelesai(row)}>
+                                            <button
+                                                type="button"
+                                                class="btn btn-xs btn-ghost"
+                                                disabled={!admin}
+                                                title={admin ? 'Tandai kasus ini selesai' : 'Hanya Administrator yang dapat menyelesaikan kasus'}
+                                                on:click={() => openSelesai(row)}>
                                                 Selesai
                                             </button>
                                         {:else}
@@ -258,9 +291,27 @@
             <textarea id="alasanSelesai" bind:value={alasanSelesai} class="textarea textarea-bordered h-24"
                 placeholder="Contoh: nasabah sudah melunasi seluruh tunggakan"></textarea>
         </div>
+        <div class="form-control mt-3">
+            <label for="adminPassword" class="label">
+                <span class="label-text">Password Administrator{account?.email ? ` (${account.email})` : ''}</span>
+            </label>
+            <input id="adminPassword" type="password" bind:value={adminPassword}
+                   class="input input-bordered" placeholder="Masukkan password Anda"
+                   autocomplete="current-password"/>
+            <span class="label-text-alt mt-1">
+                Server memverifikasi password ini dan memastikan akun Anda Administrator.
+            </span>
+        </div>
+
         <div class="card-actions justify-end mt-4">
-            <button type="button" class="btn btn-primary" on:click={doSelesai}>Simpan</button>
-            <button type="button" class="btn btn-ghost" on:click={() => isSelesai = false}>Batalkan</button>
+            <button type="button" class="btn btn-ghost btn-sm" on:click={() => isSelesai = false}>Batalkan</button>
+            <button type="button" class="btn btn-primary btn-sm" on:click={doSelesai} disabled={isSelesaiBusy}>
+                {#if isSelesaiBusy}
+                    <span class="loading loading-spinner loading-xs"></span> Memproses..
+                {:else}
+                    Simpan
+                {/if}
+            </button>
         </div>
     </form>
 </div>
