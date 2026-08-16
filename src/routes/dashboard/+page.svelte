@@ -31,6 +31,14 @@
     let isDelete:boolean        = false;
     let modalData:any           = [];
 
+    // Loans already in the Kredit Macet register, so the modal badges them
+    // instead of offering the button again.
+    let macetIDs:any            = [];
+    let isMacet:boolean         = false;
+    let alasanMacet:string      = '';
+
+    $: sudahMacet = modalData?.ID !== undefined && macetIDs.includes(modalData.ID);
+
     let id:number;
 
     onMount(() => doPost());
@@ -53,7 +61,59 @@
         const doResponse = await doPost.json();
         newData = doResponse;
         newData = newData;
-    } 
+
+        await loadStatusMacet();
+    }
+
+    /*
+    | Which loans on this page are already registered as macet, so the modal shows
+    | a badge instead of offering to add them again. One request for the whole
+    | page rather than one per row.
+    */
+    async function loadStatusMacet(){
+        if(!Array.isArray(newData) || newData.length === 0){
+            macetIDs = [];
+            return;
+        }
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Status-Macet',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({ IDS : newData.map((d:any) => d.ID) })
+            });
+            macetIDs = await doPost.json();
+        } catch {
+            // Non-fatal: worst case the button shows when a badge would do, and
+            // the backend still refuses the duplicate.
+            macetIDs = [];
+        }
+    }
+
+    function openMacet(){
+        alasanMacet = '';
+        isMacet     = true;
+    }
+
+    async function doTambahMacet(){
+        if(!alasanMacet.trim()){
+            return toast.error('Alasan kredit macet wajib diisi', { position : 'top-right' });
+        }
+
+        const doPost = await fetch(baseConfiguration.clientURL + 'Tambah-Macet',{
+            method  : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            body    : JSON.stringify({ KREDIT_ID : modalData.ID, ALASAN_MACET : alasanMacet })
+        });
+        const doResponse = await doPost.json();
+
+        if(doResponse.status == 'success'){
+            toast.success(doResponse.message, { position : 'top-right' });
+            isMacet  = false;
+            macetIDs = [...macetIDs, modalData.ID];
+        } else {
+            toast.error(doResponse.message ?? 'Gagal menyimpan', { position : 'top-right' });
+        }
+    }
 
     /*
     | Per-installment total: what this month actually costs the nasabah.
@@ -259,6 +319,14 @@
         <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={ () => isModal = false }>✕</button>
         <a href="/dashboard/report/{modalData.ID}" target="_blank" class="btn btn-primary my-2 ms-2">Cetak Halaman Pinjaman</a>
 
+        {#if sudahMacet}
+            <span class="badge badge-error badge-lg my-2 ms-2">Sudah masuk Kredit Macet</span>
+        {:else}
+            <button type="button" class="btn btn-error my-2 ms-2" on:click={openMacet}>
+                Tambahkan ke Kredit Macet
+            </button>
+        {/if}
+
         <h1 class="mt-5">Kasbon Belum Lunas: { rupiahFormatter.format(modalData.KASBON_BELUM_LUNAS) }</h1>
         <h1>Angsuran Belum Lunas: { rupiahFormatter.format(modalData.TOTAL_BELUM_LUNAS) }</h1>
         <div class="divider"></div>
@@ -340,6 +408,30 @@
         </div>
     </form>
 </div>
+<!-- Register this loan as Kredit Macet. Only the reason is typed; every amount on
+     the Data Macet page is computed from live angsuran data. -->
+<div class="modal" class:modal-open={isMacet}>
+    <form method="dialog" class="modal-box">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" on:click={() => isMacet = false}>✕</button>
+        <h2 class="card-title">Tambahkan ke Kredit Macet</h2>
+        <p class="py-2">
+            Menambahkan <strong>{modalData.NAMA}</strong> ke daftar kredit macet.
+            Pinjaman ini tetap tampil di Dashboard dan Laporan.
+        </p>
+        <div class="form-control">
+            <label for="alasanMacet" class="label">
+                <span class="label-text">Alasan / keterangan kredit macet</span>
+            </label>
+            <textarea id="alasanMacet" bind:value={alasanMacet} class="textarea textarea-bordered h-24"
+                placeholder="Contoh: nasabah pindah kerja, 6 bulan tidak ada pembayaran"></textarea>
+        </div>
+        <div class="card-actions justify-end mt-4">
+            <button type="button" class="btn btn-error" on:click={doTambahMacet}>Simpan</button>
+            <button type="button" class="btn btn-ghost" on:click={() => isMacet = false}>Batalkan</button>
+        </div>
+    </form>
+</div>
+
 <!-- Delete?? -->
 <div class="modal" class:modal-open={isDelete}>
     <form method="dialog" class="modal-box">
