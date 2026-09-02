@@ -46,4 +46,38 @@ function tanggalIndonesia(value: string): string {
     return parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-export { rupiahFormatter, defaultDateRange, tanggalIndonesia }
+/*
+| Grouped digits for a nominal INPUT — "1000000" shown as "1.000.000".
+|
+| rupiahFormatter above is for DISPLAY: it prints the currency symbol, which is
+| exactly what an input must not do, because whatever it renders has to be
+| typeable and re-parseable on the next keystroke. These two are the input pair:
+| format what is stored, parse what was typed, and never let a symbol into the
+| round trip.
+|
+| Integers only. NOMINAL is a BIGINT and the co-op does not transfer fractions of
+| a rupiah, so a decimal separator would only be a way to mistype.
+*/
+const ribuanFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+
+function formatRibuan(value: number | null | undefined): string {
+    if (value === null || value === undefined) return '';
+    if (!Number.isFinite(value)) return '';
+    return ribuanFormatter.format(Math.trunc(value));
+}
+
+/*
+| "1.000.000" -> 1000000. Anything that is not a digit is dropped, so a pasted
+| "Rp 1.000.000,-" survives and a stray letter cannot poison the value.
+|
+| Empty input returns null rather than 0. The difference matters: the form's
+| "Nominal wajib diisi" check has to be able to tell a field nobody filled in
+| from a transfer deliberately recorded as zero.
+*/
+function parseRibuan(text: string): number | null {
+    const digits = (text ?? '').replace(/\D/g, '');
+    if (digits === '') return null;
+    return parseInt(digits, 10);
+}
+
+export { rupiahFormatter, formatRibuan, parseRibuan, defaultDateRange, tanggalIndonesia }

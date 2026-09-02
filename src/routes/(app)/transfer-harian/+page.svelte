@@ -8,6 +8,7 @@
     import AdminConfirm from '$lib/AdminConfirm.svelte';
     import { getAccount, isAdmin, type KosadaAccount } from '$lib/session';
     import Panel from '$lib/Panel.svelte';
+    import Rupiah from '$lib/Rupiah.svelte';
     import Icon from '$lib/Icon.svelte';
 
     const JENIS = ['Kasbon','Top Up','Pinjaman Baru'];
@@ -242,7 +243,7 @@
                         <label for="inputNominal" class="label">
                             <span class="label-text">Uang yang harus ditransfer</span>
                         </label>
-                        <input id="inputNominal" type="number" bind:value={nominal} placeholder="0" class="input input-bordered"/>
+                        <Rupiah id="inputNominal" bind:value={nominal} />
                         {#if jenis === 'Top Up'}
                             <span class="label-text-alt mt-1">Top Up diisi manual.</span>
                         {/if}
