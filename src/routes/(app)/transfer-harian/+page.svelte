@@ -45,6 +45,23 @@
     let isHapusOpen = false;
     let isHapusBusy = false;
 
+    /*
+    | Editing a recorded line is Administrator-only on the same terms as deleting
+    | it — Transfer@updateTransfer re-verifies the password, so the disabled
+    | button is only the visible half here too.
+    |
+    | Two steps on purpose. The form collects the change, then AdminConfirm
+    | states it in words before asking for the password: an administrator
+    | approving a change they cannot see is not approving anything.
+    */
+    let ubahTarget:any = null;
+    let isUbahOpen = false;
+    let isUbahKonfirmasiOpen = false;
+    let isUbahBusy = false;
+    let ubahJenis:string        = 'Kasbon';
+    let ubahNominal:number|null = null;
+    let ubahKeterangan:string   = '';
+
     async function load(){
         isLoading = true;
         try {
@@ -171,6 +188,80 @@
         }
         isHapusBusy = false;
     }
+
+    function mintaUbah(row:any){
+        ubahTarget     = row;
+        ubahJenis      = row.JENIS;
+        ubahNominal    = row.NOMINAL;
+        ubahKeterangan = row.KETERANGAN ?? '';
+        isUbahOpen     = true;
+    }
+
+    function tutupUbah(){
+        isUbahOpen = false;
+        ubahTarget = null;
+    }
+
+    /* Simpan on the form does not save — it opens the password step. */
+    function lanjutUbah(){
+        if(ubahNominal === null || ubahNominal < 0)
+            return toast.error('Nominal wajib diisi', { position : 'top-right' });
+        isUbahKonfirmasiOpen = true;
+    }
+
+    async function ubah(event:CustomEvent<string>){
+        isUbahBusy = true;
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Ubah-Transfer',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({
+                    ID             : ubahTarget.ID,
+                    JENIS          : ubahJenis,
+                    NOMINAL        : ubahNominal,
+                    KETERANGAN     : ubahKeterangan,
+                    ADMIN_EMAIL    : account?.email ?? '',
+                    ADMIN_PASSWORD : event.detail
+                })
+            });
+            const doResponse = await doPost.json();
+
+            if(doResponse.status == 'success'){
+                toast.success(doResponse.message);
+                isUbahKonfirmasiOpen = false;
+                tutupUbah();
+                await load();
+            } else {
+                toast.error(doResponse.message ?? 'Gagal mengubah');
+            }
+        } catch {
+            toast.error('Ada masalah pada server');
+        }
+        isUbahBusy = false;
+    }
+
+    /*
+    | Exactly what is about to change, field by field, for the confirmation line.
+    | Naming the old and new nominal is the point: it is the number the
+    | administrator is actually approving.
+    */
+    $: perubahanUbah = ubahTarget
+        ? [
+            ubahNominal !== ubahTarget.NOMINAL
+                ? `nominal ${rupiahFormatter.format(ubahTarget.NOMINAL)} menjadi ${rupiahFormatter.format(ubahNominal ?? 0)}`
+                : null,
+            ubahJenis !== ubahTarget.JENIS
+                ? `jenis ${ubahTarget.JENIS} menjadi ${ubahJenis}`
+                : null,
+            ubahKeterangan !== (ubahTarget.KETERANGAN ?? '')
+                ? 'keterangan'
+                : null
+          ].filter(Boolean)
+        : [];
+
+    $: ringkasanUbah = ubahTarget && perubahanUbah.length > 0
+        ? `Ubah transfer ${ubahTarget.NAMA} — ${perubahanUbah.join(', ')}.`
+        : '';
 
     $: printHref = '/transfer-harian/print?tanggal=' + tanggal;
     $: adaTerlambat = rows.some((r:any) => r.TERLAMBAT);
@@ -303,7 +394,13 @@
                                     <td>{row.INSTANSI}</td>
                                     <td class="text-right whitespace-nowrap">{rupiahFormatter.format(row.NOMINAL)}</td>
                                     <td>{row.KETERANGAN ?? '-'}</td>
-                                    <td>
+                                    <td class="whitespace-nowrap">
+                                        <button
+                                            type="button"
+                                            class="btn btn-xs btn-ghost"
+                                            disabled={!admin}
+                                            title={admin ? 'Ubah data transfer' : 'Hanya Administrator yang dapat mengubah'}
+                                            on:click={() => mintaUbah(row)}>Ubah</button>
                                         <button
                                             type="button"
                                             class="btn btn-xs btn-ghost text-error"
@@ -329,6 +426,63 @@
     </Panel>
 </div>
 
+<!--
+| The correction form. Nama, instansi and the transfer date are shown but not
+| editable: a row against the wrong nasabah is not a row to correct, it is one
+| to delete, and Transfer@updateTransfer refuses those fields anyway.
+-->
+<div class="modal" class:modal-open={isUbahOpen}>
+    <div class="modal-box">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                aria-label="Tutup" on:click={tutupUbah}>✕</button>
+
+        <h2 class="font-semibold">Ubah Data Transfer</h2>
+
+        {#if ubahTarget}
+            <p class="py-2 text-sm opacity-70">
+                {ubahTarget.NAMA} · {ubahTarget.INSTANSI || '-'}
+            </p>
+
+            <div class="grid gap-3">
+                <div class="form-control">
+                    <label for="ubahJenis" class="label"><span class="label-text">Keterangan (Jenis)</span></label>
+                    <select id="ubahJenis" bind:value={ubahJenis} class="select select-bordered">
+                        {#each JENIS as j}
+                            <option value={j}>{j}</option>
+                        {/each}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label for="ubahNominal" class="label">
+                        <span class="label-text">Uang yang harus ditransfer</span>
+                    </label>
+                    <Rupiah id="ubahNominal" bind:value={ubahNominal} />
+                    <span class="label-text-alt mt-1">
+                        Semula {rupiahFormatter.format(ubahTarget.NOMINAL)}
+                    </span>
+                </div>
+
+                <div class="form-control">
+                    <label for="ubahKeterangan" class="label"><span class="label-text">Keterangan</span></label>
+                    <input id="ubahKeterangan" type="text" bind:value={ubahKeterangan}
+                           placeholder="Catatan tambahan (opsional)" class="input input-bordered"/>
+                </div>
+            </div>
+
+            <p class="label-text-alt mt-3">
+                Nama dan instansi tidak dapat diubah. Baris yang salah nasabah sebaiknya dihapus.
+            </p>
+        {/if}
+
+        <div class="card-actions justify-end mt-4">
+            <button type="button" class="btn btn-ghost btn-sm" on:click={tutupUbah}>Batalkan</button>
+            <button type="button" class="btn btn-primary btn-sm" on:click={lanjutUbah}
+                    disabled={perubahanUbah.length === 0}>Simpan</button>
+        </div>
+    </div>
+</div>
+
 <AdminConfirm
     bind:open={isHapusOpen}
     email={account?.email ?? ''}
@@ -338,3 +492,11 @@
         ? `Hapus transfer ${hapusTarget.NAMA} sebesar ${rupiahFormatter.format(hapusTarget.NOMINAL)}. Baris ini akan hilang dari rekap hari itu.`
         : ''}
     on:confirm={hapus} />
+
+<AdminConfirm
+    bind:open={isUbahKonfirmasiOpen}
+    email={account?.email ?? ''}
+    busy={isUbahBusy}
+    confirmLabel="Simpan Perubahan"
+    action={ringkasanUbah}
+    on:confirm={ubah} />
