@@ -109,6 +109,28 @@ test.describe('Transfer Harian', () => {
         await expect(page.locator('#pilihJenis')).toBeVisible();
         await expect(page.locator('#inputNominal')).toBeVisible();
     });
+
+    test('the nominal field groups thousands as you type', async ({ page }) => {
+        await page.goto('/transfer-harian');
+        await page.waitForLoadState('networkidle');
+
+        const nominal = page.locator('#inputNominal');
+        await nominal.click();
+        await nominal.pressSequentially('1000000');
+        await expect(nominal).toHaveValue('1.000.000');
+
+        /*
+        | Backspace landing on a separator must delete the digit BEYOND it.
+        | Three lefts from the end puts the caret just after the second ".";
+        | deleting the "." alone would reformat straight back and the key would
+        | read as dead, which is the whole reason the handler exists.
+        */
+        await nominal.press('ArrowLeft');
+        await nominal.press('ArrowLeft');
+        await nominal.press('ArrowLeft');
+        await nominal.press('Backspace');
+        await expect(nominal).toHaveValue('100.000');
+    });
 });
 
 test.describe('Tambah Kredit', () => {
@@ -194,6 +216,24 @@ test.describe('Administrator-only row actions', () => {
         await page.goto('/transfer-harian');
         await page.waitForLoadState('networkidle');
         const adminButtons = page.getByRole('button', { name : 'Hapus' });
+        if(await adminButtons.count() > 0){
+            await expect(adminButtons.first()).toBeEnabled();
+        }
+    });
+
+    test('Transfer Harian: Ubah is disabled for Staff, enabled for Administrator', async ({ page }) => {
+        await signInAs(page, 'Staff');
+        await page.goto('/transfer-harian');
+        await page.waitForLoadState('networkidle');
+        const staffButtons = page.getByRole('button', { name : 'Ubah' });
+        if(await staffButtons.count() > 0){
+            await expect(staffButtons.first()).toBeDisabled();
+        }
+
+        await signInAs(page, 'Administrator');
+        await page.goto('/transfer-harian');
+        await page.waitForLoadState('networkidle');
+        const adminButtons = page.getByRole('button', { name : 'Ubah' });
         if(await adminButtons.count() > 0){
             await expect(adminButtons.first()).toBeEnabled();
         }
