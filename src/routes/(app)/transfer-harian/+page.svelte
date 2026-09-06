@@ -21,7 +21,9 @@
 
     let tanggal:string = hariIni();
     let rows:any = [];
-    let meta:any = { total : 0, total_nominal : 0, page : 1, per_page : 50, last_page : 1 };
+    // One day, whole. Transfer-Harian returns every line of the date, so there
+    // is no page state here and the row numbers run 1..total.
+    let meta:any = { total : 0, total_nominal : 0 };
     let isLoading = false;
 
     // --- entry form ---------------------------------------------------------

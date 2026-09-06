@@ -4,6 +4,12 @@ Kosada frontend. Newest first.
 
 ## Unreleased
 
+### Fixed
+- Transfer Harian listed only the first 50 transfers of a day. The cause was the
+  API's default page size, fixed in Marmyadose; the page keeps no page state of
+  its own any more, so the row numbers run 1..total and the footer's total now
+  counts the rows above it.
+
 ### Added
 - `<Rupiah>` — a nominal input that groups thousands as you type, so
   `1000000` reads `1.000.000`. Caret position survives the reformat and
