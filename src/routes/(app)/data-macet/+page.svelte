@@ -9,6 +9,7 @@
     import { getAccount, isAdmin, type KosadaAccount } from '$lib/session';
     import Panel from '$lib/Panel.svelte';
     import Icon from '$lib/Icon.svelte';
+    import AdminConfirm from '$lib/AdminConfirm.svelte';
 
     let rows:any = [];
     let meta:any = { page : 1, per_page : 25, total : 0, last_page : 1 };
@@ -39,6 +40,27 @@
     let isSelesaiBusy          = false;
     let account:KosadaAccount | null = null;
     let admin = false;
+
+    /*
+    | Editing and deleting a case are Administrator-only on the same terms as
+    | Selesai — Macet@updateMacet and Macet@deleteMacet re-verify the password.
+    |
+    | Editing is two steps, as on Transfer Harian: the form collects the change,
+    | then AdminConfirm states it in words before asking for the password.
+    */
+    let ubahTarget:any        = null;
+    let isUbahOpen            = false;
+    let isUbahKonfirmasiOpen  = false;
+    let isUbahBusy            = false;
+    let ubahAlasan:string     = '';
+    let ubahTanggal:string    = '';
+
+    let hapusTarget:any = null;
+    let isHapusOpen     = false;
+    let isHapusBusy     = false;
+
+    // Local date, not a bare toISOString(): that is UTC and reads as yesterday before 07:00 WIB.
+    const hariIni = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
     async function load(){
         isLoading = true;
@@ -122,6 +144,101 @@
         isSelesaiBusy = false;
     }
 
+    function mintaUbah(row:any){
+        ubahTarget  = row;
+        ubahAlasan  = row.ALASAN_MACET ?? '';
+        ubahTanggal = row.TANGGAL_MACET_ISO ?? '';
+        isUbahOpen  = true;
+    }
+
+    function tutupUbah(){
+        isUbahOpen = false;
+        ubahTarget = null;
+    }
+
+    /* Simpan on the form does not save — it opens the password step. */
+    function lanjutUbah(){
+        if(!ubahAlasan.trim())    return toast.error('Alasan kredit macet wajib diisi');
+        if(!ubahTanggal)          return toast.error('Tanggal macet wajib diisi');
+        if(ubahTanggal > hariIni) return toast.error('Tanggal macet tidak boleh melewati hari ini');
+        isUbahKonfirmasiOpen = true;
+    }
+
+    async function ubah(event:CustomEvent<string>){
+        isUbahBusy = true;
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Ubah-Macet',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({
+                    ID             : ubahTarget.ID,
+                    ALASAN_MACET   : ubahAlasan,
+                    TANGGAL_MACET  : ubahTanggal,
+                    ADMIN_EMAIL    : account?.email ?? '',
+                    ADMIN_PASSWORD : event.detail
+                })
+            });
+            const doResponse = await doPost.json();
+
+            if(doResponse.status == 'success'){
+                toast.success(doResponse.message);
+                isUbahKonfirmasiOpen = false;
+                tutupUbah();
+                await load();
+            } else {
+                toast.error(doResponse.message ?? 'Gagal mengubah');
+            }
+        } catch {
+            toast.error('Ada masalah pada server');
+        }
+        isUbahBusy = false;
+    }
+
+    function mintaHapus(row:any){
+        hapusTarget = row;
+        isHapusOpen = true;
+    }
+
+    async function hapus(event:CustomEvent<string>){
+        isHapusBusy = true;
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Hapus-Macet',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({
+                    ID             : hapusTarget.ID,
+                    ADMIN_EMAIL    : account?.email ?? '',
+                    ADMIN_PASSWORD : event.detail
+                })
+            });
+            const doResponse = await doPost.json();
+
+            if(doResponse.status == 'success'){
+                toast.success(doResponse.message);
+                isHapusOpen = false;
+                // Deleting the last row of a page must not strand the user on an empty page.
+                if(rows.length === 1 && page > 1) page -= 1;
+                await load();
+            } else {
+                toast.error(doResponse.message ?? 'Gagal menghapus');
+            }
+        } catch {
+            toast.error('Ada masalah pada server');
+        }
+        isHapusBusy = false;
+    }
+
+    $: perubahanUbah = ubahTarget
+        ? [
+            ubahTanggal !== (ubahTarget.TANGGAL_MACET_ISO ?? '') ? 'tanggal macet' : null,
+            ubahAlasan  !== (ubahTarget.ALASAN_MACET ?? '')      ? 'alasan macet'  : null
+          ].filter(Boolean)
+        : [];
+
+    $: ringkasanUbah = ubahTarget && perubahanUbah.length > 0
+        ? `Ubah data macet ${ubahTarget.NAMA} — ${perubahanUbah.join(' dan ')}.`
+        : '';
+
     // Built from `applied`, so the printout matches the table on screen rather
     // than whatever half-typed filters are sitting in the form.
     $: printHref = '/data-macet/print?' + new URLSearchParams({
@@ -186,6 +303,7 @@
                         <tr>
                             <th>#</th>
                             <th>Nama</th>
+                            <th>Tgl Pinjaman</th>
                             <th class="text-right">Total Pinjaman</th>
                             <th class="text-right">Sisa Angsuran</th>
                             <th class="text-right">Penalti (30%)</th>
@@ -200,9 +318,9 @@
                     </thead>
                     <tbody>
                         {#if isLoading}
-                            <tr><td colspan="12" class="text-center py-6">Memuat data..</td></tr>
+                            <tr><td colspan="13" class="text-center py-6">Memuat data..</td></tr>
                         {:else if rows.length === 0}
-                            <tr><td colspan="12" class="text-center py-6">Tidak ada data kredit macet.</td></tr>
+                            <tr><td colspan="13" class="text-center py-6">Tidak ada data kredit macet.</td></tr>
                         {:else}
                             {#each rows as row, index}
                                 <tr class="hover">
@@ -213,6 +331,7 @@
                                             <span class="badge badge-success badge-sm ms-1">Selesai</span>
                                         {/if}
                                     </td>
+                                    <td class="whitespace-nowrap">{row.TANGGAL_PINJAMAN ?? '-'}</td>
                                     <td class="text-right whitespace-nowrap">{rupiahFormatter.format(row.TOTAL_PINJAMAN)}</td>
                                     <td class="text-right whitespace-nowrap">{rupiahFormatter.format(row.SISA_ANGSURAN)}</td>
                                     <td class="text-right whitespace-nowrap">{rupiahFormatter.format(row.PENALTI)}</td>
@@ -230,7 +349,7 @@
                                             -
                                         {/if}
                                     </td>
-                                    <td>
+                                    <td class="whitespace-nowrap">
                                         {#if row.STATUS === 'Macet'}
                                             <button
                                                 type="button"
@@ -243,6 +362,18 @@
                                         {:else}
                                             <span class="text-xs opacity-60">{row.TANGGAL_SELESAI}</span>
                                         {/if}
+                                        <button
+                                            type="button"
+                                            class="btn btn-xs btn-ghost"
+                                            disabled={!admin}
+                                            title={admin ? 'Ubah alasan atau tanggal macet' : 'Hanya Administrator yang dapat mengubah'}
+                                            on:click={() => mintaUbah(row)}>Ubah</button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-xs btn-ghost text-error"
+                                            disabled={!admin}
+                                            title={admin ? 'Hapus dari data macet' : 'Hanya Administrator yang dapat menghapus'}
+                                            on:click={() => mintaHapus(row)}>Hapus</button>
                                     </td>
                                 </tr>
                             {/each}
@@ -251,7 +382,7 @@
                     {#if rows.length > 0}
                         <tfoot>
                             <tr class="font-bold">
-                                <td colspan="5">Total tagihan halaman ini</td>
+                                <td colspan="6">Total tagihan halaman ini</td>
                                 <td class="text-right">{rupiahFormatter.format(totalTagihan)}</td>
                                 <td colspan="6"></td>
                             </tr>
@@ -315,3 +446,63 @@
         </div>
     </form>
 </div>
+
+<!--
+| Correct a case. Only the reason and the date it went bad — every nominal is
+| computed from the installments, so there is nothing else here to correct.
+-->
+<div class="modal" class:modal-open={isUbahOpen}>
+    <div class="modal-box">
+        <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                aria-label="Tutup" on:click={tutupUbah}>✕</button>
+
+        <h2 class="font-semibold">Ubah Data Macet</h2>
+
+        {#if ubahTarget}
+            <p class="py-2 text-sm opacity-70">
+                {ubahTarget.NAMA} · pinjaman {ubahTarget.TANGGAL_PINJAMAN ?? '-'}
+            </p>
+
+            <div class="grid gap-3">
+                <div class="form-control">
+                    <label for="ubahTanggalMacet" class="label"><span class="label-text">Tanggal macet</span></label>
+                    <input id="ubahTanggalMacet" type="date" bind:value={ubahTanggal} max={hariIni}
+                           class="input input-bordered"/>
+                </div>
+
+                <div class="form-control">
+                    <label for="ubahAlasanMacet" class="label"><span class="label-text">Alasan macet</span></label>
+                    <textarea id="ubahAlasanMacet" bind:value={ubahAlasan} class="textarea textarea-bordered h-24"></textarea>
+                </div>
+            </div>
+
+            <p class="label-text-alt mt-3">
+                Nominal tidak dapat diubah di sini — dihitung langsung dari data angsuran.
+            </p>
+        {/if}
+
+        <div class="card-actions justify-end mt-4">
+            <button type="button" class="btn btn-ghost btn-sm" on:click={tutupUbah}>Batalkan</button>
+            <button type="button" class="btn btn-primary btn-sm" on:click={lanjutUbah}
+                    disabled={perubahanUbah.length === 0}>Simpan</button>
+        </div>
+    </div>
+</div>
+
+<AdminConfirm
+    bind:open={isUbahKonfirmasiOpen}
+    email={account?.email ?? ''}
+    busy={isUbahBusy}
+    confirmLabel="Simpan Perubahan"
+    action={ringkasanUbah}
+    on:confirm={ubah} />
+
+<AdminConfirm
+    bind:open={isHapusOpen}
+    email={account?.email ?? ''}
+    busy={isHapusBusy}
+    confirmLabel="Hapus"
+    action={hapusTarget
+        ? `Hapus ${hapusTarget.NAMA} dari data kredit macet. Pinjaman dan angsurannya tidak ikut terhapus, tetapi riwayat macetnya hilang. Jika kasusnya sudah beres, gunakan Selesai.`
+        : ''}
+    on:confirm={hapus} />

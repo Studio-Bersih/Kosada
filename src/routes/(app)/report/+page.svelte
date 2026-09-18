@@ -50,6 +50,7 @@
             label   : 'Report'
         });
         newData = list.data;
+        urutanBerubah = false;
         meta    = list.meta;
         return newData;
     };
@@ -99,6 +100,55 @@
         if(hidden) newData = newData.filter((d:any) => d.ID !== ID);
         if(showHidden) await loadHidden();
         if(!hidden && applied.awal && applied.akhir) await getReport();
+    }
+
+    /*
+    | The loan's place in its marketing's ATM book. Saved as soon as the field is
+    | left (on change), one loan at a time.
+    |
+    | The table is deliberately NOT re-sorted after each save: a row jumping away
+    | while staff are typing down the column would put the next number on the
+    | wrong loan. Instead a button appears to apply the new order when they are
+    | done.
+    */
+    let urutanBerubah = false;
+
+    async function simpanUrutan(data:any, event:Event){
+        const input = event.currentTarget as HTMLInputElement;
+        const raw   = input.value.trim();
+        const nilai = raw === '' ? null : Number(raw);
+        const semula = data.URUTAN_ATM ?? null;
+
+        if(nilai !== null && (!Number.isInteger(nilai) || nilai < 1)){
+            input.value = semula ?? '';
+            return toast.error('Nomor urut ATM harus angka bulat mulai dari 1', { position : 'top-right' });
+        }
+        if(nilai === semula) return;
+
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Urutan-ATM',{
+                method  : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body    : JSON.stringify({ ID : data.ID, URUTAN_ATM : nilai })
+            });
+            const doResponse = await doPost.json();
+
+            if(doResponse.status != 'success'){
+                input.value = semula ?? '';
+                return toast.error(doResponse.message ?? 'Gagal menyimpan', { position : 'top-right' });
+            }
+            data.URUTAN_ATM = nilai;
+            newData = newData;
+            urutanBerubah = true;
+            toast.success(doResponse.message, { position : 'top-right' });
+        } catch {
+            input.value = semula ?? '';
+            toast.error('Ada masalah pada server', { position : 'top-right' });
+        }
+    }
+
+    function terapkanUrutan(){
+        return doPost();
     }
 
     async function onToggleShowHidden(){
@@ -204,12 +254,27 @@
                 </div>
             {/if}
 
+    {#if newData.length > 0}
+        <div class="flex flex-wrap items-center gap-2 text-sm text-muted">
+            <span>
+                Isi <strong>No. ATM</strong> sesuai urutan di buku ATM marketing — laporan dan cetakan akan
+                mengikuti urutan itu. Yang belum bernomor tampil di bawahnya, urut tanggal pinjaman terbaru.
+            </span>
+            {#if urutanBerubah}
+                <button type="button" class="btn btn-primary btn-xs" on:click={terapkanUrutan}>
+                    Terapkan urutan
+                </button>
+            {/if}
+        </div>
+    {/if}
+
     <Panel flush>
             <div class="overflow-x-auto max-h-[70vh]">
                 <table class="table-kosada">
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>No. ATM</th>
                             <th>Nama</th>
                             <th>Kasbon</th>
                             <th>Angsuran</th>
@@ -220,9 +285,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each newData as data,index }
+                        {#each newData as data,index (data.ID) }
                             <tr class="hover">
                                 <td>{ (meta.page - 1) * meta.per_page + index + 1 }</td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        inputmode="numeric"
+                                        value={data.URUTAN_ATM ?? ''}
+                                        on:change={(e) => simpanUrutan(data, e)}
+                                        on:keydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                                        class="input input-bordered input-xs w-20"
+                                        placeholder="-"
+                                        aria-label="No. urut ATM {data.NAMA}"
+                                        title={data.MARKETING ? `Urutan di buku ATM ${data.MARKETING}` : 'Urutan di buku ATM'}/>
+                                </td>
                                 <td>{ data.NAMA }</td>
                                 <td>{ rupiahFormatter.format(data.KASBON) }</td>
                                 <td>{ rupiahFormatter.format(data.CICILAN_TOTAL) }</td>
@@ -240,7 +319,7 @@
                     {#if newData.length > 0}
                         <tfoot>
                             <tr class="font-bold">
-                                <td colspan="2">Total halaman ini ({newData.length} data)</td>
+                                <td colspan="3">Total halaman ini ({newData.length} data)</td>
                                 <td>{ rupiahFormatter.format(totalKasbon) }</td>
                                 <td>{ rupiahFormatter.format(totalAngsuran) }</td>
                                 <td colspan="2"></td>

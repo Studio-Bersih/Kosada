@@ -75,6 +75,7 @@
                         <tr>
                             <th>#</th>
                             <th>Nama</th>
+                            <th>Tgl Pinjaman</th>
                             <th class="text-right">Total Pinjaman</th>
                             <th class="text-right">Sisa Angsuran</th>
                             <th class="text-right">Penalti 30%</th>
@@ -90,6 +91,7 @@
                             <tr>
                                 <td>{index + 1}</td>
                                 <td>{row.NAMA}</td>
+                                <td class="whitespace-nowrap">{row.TANGGAL_PINJAMAN ?? '-'}</td>
                                 <td class="text-right">{rupiahFormatter.format(row.TOTAL_PINJAMAN)}</td>
                                 <td class="text-right">{rupiahFormatter.format(row.SISA_ANGSURAN)}</td>
                                 <td class="text-right">{rupiahFormatter.format(row.PENALTI)}</td>
@@ -103,7 +105,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="font-bold">
-                            <td colspan="2">Total ({rows.length} data)</td>
+                            <td colspan="3">Total ({rows.length} data)</td>
                             <td class="text-right">{rupiahFormatter.format(totalPinjaman)}</td>
                             <td class="text-right">{rupiahFormatter.format(totalSisa)}</td>
                             <td class="text-right">{rupiahFormatter.format(totalPenalti)}</td>

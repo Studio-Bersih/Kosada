@@ -103,6 +103,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>No. ATM</th>
                             <th>Nama</th>
                             <th class="text-right">Kasbon</th>
                             <th class="text-right">Angsuran</th>
@@ -115,6 +116,7 @@
                         {#each rows as row, index}
                             <tr>
                                 <td>{index + 1}</td>
+                                <td>{row.URUTAN_ATM ?? '-'}</td>
                                 <td>{row.NAMA}</td>
                                 <td class="text-right">{rupiahFormatter.format(row.KASBON)}</td>
                                 <td class="text-right">{rupiahFormatter.format(row.CICILAN_TOTAL)}</td>
@@ -126,7 +128,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="font-bold">
-                            <td colspan="2">Total ({rows.length} data)</td>
+                            <td colspan="3">Total ({rows.length} data)</td>
                             <td class="text-right">{rupiahFormatter.format(totalKasbon)}</td>
                             <td class="text-right">{rupiahFormatter.format(totalAngsuran)}</td>
                             <td colspan="2"></td>
