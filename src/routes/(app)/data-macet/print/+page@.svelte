@@ -51,7 +51,7 @@
 
 <svelte:head><title>Data Kredit Macet — Koperasi Kosada</title></svelte:head>
 
-<div class="container mx-auto print-sheet">
+<div class="container mx-auto print-sheet macet-sheet">
     <div class="card w-full bg-base-100 shadow-xl my-6">
         <div class="card-body">
 
@@ -70,7 +70,7 @@
             {:else if rows.length === 0}
                 <p class="text-center py-10">Tidak ada data kredit macet.</p>
             {:else}
-                <table class="table table-xs">
+                <table class="table macet-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -82,6 +82,7 @@
                             <th class="text-right">Total Tagihan</th>
                             <th>Pekerjaan</th>
                             <th>Alamat</th>
+                            <th>Keterangan</th>
                             <th>WhatsApp</th>
                             <th>Alasan Macet</th>
                         </tr>
@@ -98,6 +99,7 @@
                                 <td class="text-right font-bold">{rupiahFormatter.format(row.TOTAL_TAGIHAN)}</td>
                                 <td>{row.PEKERJAAN}</td>
                                 <td>{row.ALAMAT}</td>
+                                <td>{row.KETERANGAN ?? '-'}</td>
                                 <td>{row.WHATSAPP}</td>
                                 <td>{row.ALASAN_MACET}</td>
                             </tr>
@@ -110,7 +112,7 @@
                             <td class="text-right">{rupiahFormatter.format(totalSisa)}</td>
                             <td class="text-right">{rupiahFormatter.format(totalPenalti)}</td>
                             <td class="text-right">{rupiahFormatter.format(totalTagihan)}</td>
-                            <td colspan="4"></td>
+                            <td colspan="5"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -128,3 +130,29 @@
         </div>
     </div>
 </div>
+
+<style>
+    /*
+    | The register has 12 columns, so it prints landscape; that leaves room for
+    | a font the office can read comfortably (requested larger than table-xs).
+    */
+    @page macet {
+        size: A4 landscape;
+        margin: 10mm;
+    }
+    .macet-sheet {
+        page: macet;
+    }
+    .macet-table {
+        font-size: 13px;
+    }
+    .macet-table th,
+    .macet-table td {
+        padding: 4px 6px;
+    }
+    @media print {
+        .macet-table {
+            font-size: 12pt;
+        }
+    }
+</style>
