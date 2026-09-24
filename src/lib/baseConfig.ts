@@ -17,7 +17,7 @@ const isDevelopment:boolean = import.meta.env.DEV;
 | loads and the proxy in src/routes/api/[...path] — so those requests carry no
 | Origin header and CORS never applies to them.
 */
-const apiRoot:string = isDevelopment ? 'http://localhost:8000/api/' : 'https://fae.deabakery.co.id/api/';
+const apiRoot:string = isDevelopment ? 'http://localhost:8000/api/' : 'http://202.157.189.77/api/';
 
 export const baseConfiguration = {
     apiRoot    : apiRoot,
