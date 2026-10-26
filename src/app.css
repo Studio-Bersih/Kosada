@@ -450,4 +450,16 @@ a, .link {
     .print-sheet thead th {
         position: static !important;
     }
+
+    /*
+    | Readable on paper. The tables are table-sm on screen, which printed at ~9pt;
+    | the office asked for larger text (same 12pt Data Macet already prints at).
+    */
+    .print-sheet table {
+        font-size: 12pt !important;
+    }
+    .print-sheet th,
+    .print-sheet td {
+        padding: 4px 6px !important;
+    }
 }

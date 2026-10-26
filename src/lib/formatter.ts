@@ -80,4 +80,4 @@ function parseRibuan(text: string): number | null {
     return parseInt(digits, 10);
 }
 
-export { rupiahFormatter, formatRibuan, parseRibuan, defaultDateRange, tanggalIndonesia }
+export { rupiahFormatter, formatRibuan, parseRibuan, defaultDateRange, tanggalIndonesia, useFormat }

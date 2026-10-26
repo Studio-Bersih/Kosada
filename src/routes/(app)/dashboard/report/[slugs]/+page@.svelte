@@ -2,6 +2,14 @@
     import { rupiahFormatter } from '$lib/formatter.js';
     export let data;
     let newData:any = data.data;
+
+    // Installments numbered among themselves; kasbon-only rows (JENIS 'Kasbon')
+    // are labelled instead. See the Dashboard detail drawer.
+    const isKasbonSaja = (detail:any) => detail.JENIS === 'Kasbon';
+    const nomorCicilan:number[] = (newData?.DETAIL ?? []).reduce((acc:number[], d:any) => {
+        acc.push(isKasbonSaja(d) ? 0 : acc.filter(n => n > 0).length + 1);
+        return acc;
+    }, []);
 </script>
 <div class="container mx-auto">
     <div class="card w-full bg-base-100 shadow-xl">
@@ -59,13 +67,15 @@
                             {#each newData.DETAIL as detail, index }
                                 <tr class="hover">
                                     <td>
-                                        {#if detail.LUNAS == 'Belum'}
-                                            <button type="button" class="btn btn-ghost w-full">Cicilan ke - {index + 1}</button>
+                                        {#if isKasbonSaja(detail)}
+                                            <button type="button" class="btn btn-ghost w-full">Kasbon{detail.LUNAS == 'Belum' ? '' : ' ✔'}</button>
+                                        {:else if detail.LUNAS == 'Belum'}
+                                            <button type="button" class="btn btn-ghost w-full">Cicilan ke - {nomorCicilan[index]}</button>
                                         {:else}
                                             <button type='button' class='btn btn-primary w-full'>Lunas ✔</button>
                                         {/if}
                                     </td>
-                                    <td>{rupiahFormatter.format(detail.NOMINAL)}</td>
+                                    <td>{isKasbonSaja(detail) ? '-' : rupiahFormatter.format(detail.NOMINAL)}</td>
                                     <td>{detail.JATUH_TEMPO}</td>
                                     <td>{ rupiahFormatter.format(Number(detail.KASBON)) }</td>
                                     <td>{detail.LUNAS} Lunas</td>

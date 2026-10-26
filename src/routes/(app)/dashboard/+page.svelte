@@ -6,7 +6,8 @@
     import PageHeader from "$lib/PageHeader.svelte";
     import Panel from "$lib/Panel.svelte";
     import Drawer from "$lib/Drawer.svelte";
-    import { defaultDateRange, rupiahFormatter, tanggalIndonesia } from "$lib/formatter";
+    import Rupiah from "$lib/Rupiah.svelte";
+    import { defaultDateRange, rupiahFormatter, tanggalIndonesia, useFormat } from "$lib/formatter";
     import { baseConfiguration } from "$lib/baseConfig";
     import { normalizeList, readJsonArray } from "$lib/apiList";
     import toast from '$lib/toast';
@@ -190,11 +191,85 @@
 
     async function showModal(ID:number){
         isModal = true;
+        kasbonSaja = { amount : null, tanggal : useFormat(new Date()) };
+        await loadDetail(ID);
+    }
+
+    async function loadDetail(ID:number){
         const doGet = await fetch(baseConfiguration.clientURL + 'Detail-Kredit/' + ID,{
             method: 'GET',
         });
         const doResponse = await doGet.json();
         modalData = doResponse.data;
+    }
+
+    /*
+    | Installments are numbered among themselves; kasbon-only rows (JENIS
+    | 'Kasbon') follow them unnumbered. An older backend sends no JENIS, and every
+    | row it has is an installment.
+    */
+    const isKasbonSaja = (detail:any) => detail.JENIS === 'Kasbon';
+    $: nomorCicilan = (modalData.DETAIL ?? []).reduce((acc:number[], d:any) => {
+        acc.push(isKasbonSaja(d) ? 0 : acc.filter(n => n > 0).length + 1);
+        return acc;
+    }, []);
+
+    /*
+    | Kasbon without an installment. Many members have paid every installment and
+    | still take kasbon; there was no unpaid row left to put it on, and kasbon on a
+    | settled row no longer counts on the Laporan. See Kredit@addKasbonSaja.
+    */
+    let kasbonSaja:{ amount:number|null, tanggal:string } = { amount : null, tanggal : '' };
+    let isSavingKasbon = false;
+
+    async function tambahKasbonSaja(){
+        if(!kasbonSaja.amount || kasbonSaja.amount <= 0){
+            return toast.error('Nominal kasbon wajib diisi', { position : 'top-right' });
+        }
+        if(!kasbonSaja.tanggal){
+            return toast.error('Tanggal kasbon wajib diisi', { position : 'top-right' });
+        }
+
+        isSavingKasbon = true;
+        try {
+            const doPost = await fetch(baseConfiguration.clientURL + 'Tambah-Kasbon-Saja',{
+                method : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body : JSON.stringify({
+                    KREDIT_ID   : modalData.ID,
+                    AMOUNT      : kasbonSaja.amount,
+                    JATUH_TEMPO : kasbonSaja.tanggal
+                })
+            });
+            const doResponse = await doPost.json();
+            if(doResponse.status == 'success'){
+                toast.success(doResponse.message, { position : 'top-right' });
+                kasbonSaja.amount = null;
+                await loadDetail(modalData.ID);
+            } else {
+                toast.error(doResponse.message ?? 'Gagal menyimpan', { position : 'top-right' });
+            }
+        } catch {
+            toast.error('Ada masalah pada server', { position : 'top-right' });
+        }
+        isSavingKasbon = false;
+    }
+
+    async function hapusKasbonSaja(ID:number){
+        if(!confirm('Hapus baris kasbon ini?')) return;
+
+        const doPost = await fetch(baseConfiguration.clientURL + 'Hapus-Kasbon-Saja',{
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            body : JSON.stringify({ ID : ID })
+        });
+        const doResponse = await doPost.json();
+        if(doResponse.status == 'success'){
+            toast.success(doResponse.message, { position : 'top-right' });
+            await loadDetail(modalData.ID);
+        } else {
+            toast.error(doResponse.message ?? 'Gagal menghapus', { position : 'top-right' });
+        }
     }
 
     async function changeMarketing(ID:number,status:string){
@@ -462,15 +537,23 @@
                     {#each modalData.DETAIL as detail, index }
                         <tr>
                             <td class="whitespace-nowrap">
-                                {#if detail.LUNAS == 'Belum'}
-                                    <span class="text-muted">Cicilan {index + 1}</span>
+                                {#if isKasbonSaja(detail)}
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="badge badge-warning badge-sm" class:badge-outline={detail.LUNAS != 'Belum'}>Kasbon</span>
+                                        <button type="button" class="btn btn-ghost btn-xs text-error" title="Hapus baris kasbon"
+                                                aria-label="Hapus baris kasbon" on:click={() => hapusKasbonSaja(detail.ID)}>
+                                            <Icon name="trash" size={14} />
+                                        </button>
+                                    </span>
+                                {:else if detail.LUNAS == 'Belum'}
+                                    <span class="text-muted">Cicilan {nomorCicilan[index]}</span>
                                 {:else}
                                     <span class="inline-flex items-center gap-1 text-success">
-                                        <Icon name="check" size={14} /> {index + 1}
+                                        <Icon name="check" size={14} /> {nomorCicilan[index]}
                                     </span>
                                 {/if}
                             </td>
-                            <td class="num">{rupiahFormatter.format(detail.NOMINAL)}</td>
+                            <td class="num">{isKasbonSaja(detail) ? '-' : rupiahFormatter.format(detail.NOMINAL)}</td>
                             <td class="whitespace-nowrap">{detail.JATUH_TEMPO}</td>
                             <td>
                                 <input type="number" bind:value={detail.KASBON}
@@ -491,6 +574,29 @@
             </tbody>
         </table>
     </div>
+
+    <!-- A row that is kasbon only, for members whose installments are all paid. -->
+    <form on:submit|preventDefault={tambahKasbonSaja}
+          class="mt-4 rounded-lg border border-dashed border-base-300 p-3">
+        <h3 class="text-sm font-semibold">Tambah Kasbon (tanpa angsuran)</h3>
+        <p class="text-xs text-muted mb-2">Untuk nasabah yang angsurannya sudah lunas tetapi masih mengambil kasbon.</p>
+        <div class="flex flex-wrap items-end gap-2">
+            <div class="form-control">
+                <label for="kasbonSajaNominal" class="label py-1"><span class="label-text text-xs">Nominal kasbon</span></label>
+                <Rupiah id="kasbonSajaNominal" bind:value={kasbonSaja.amount}
+                        class="input input-bordered input-sm w-36 text-right" />
+            </div>
+            <div class="form-control">
+                <label for="kasbonSajaTanggal" class="label py-1"><span class="label-text text-xs">Tanggal</span></label>
+                <input id="kasbonSajaTanggal" type="date" bind:value={kasbonSaja.tanggal}
+                       class="input input-bordered input-sm" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" disabled={isSavingKasbon || modalData.ID === undefined}>
+                {#if isSavingKasbon}<span class="loading loading-spinner loading-xs"></span>{/if}
+                Tambah Kasbon
+            </button>
+        </div>
+    </form>
 
     <svelte:fragment slot="footer">
         {#if sudahMacet}
