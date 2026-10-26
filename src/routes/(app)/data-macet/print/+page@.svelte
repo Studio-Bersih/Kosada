@@ -19,6 +19,7 @@
     const status    = $page.url.searchParams.get('status')    ?? 'Macet';
     const marketing = $page.url.searchParams.get('marketing') ?? 'SEMUA';
     const nama      = $page.url.searchParams.get('nama')      ?? '';
+    const alamat    = $page.url.searchParams.get('alamat')    ?? '';
 
     const statusLabel = status === 'Macet'   ? 'Masih Macet'
                       : status === 'Selesai' ? 'Sudah Selesai'
@@ -26,7 +27,8 @@
 
     $: subtitle = `${statusLabel}`
         + ` · Marketing: ${marketing === 'SEMUA' ? 'Semua' : marketing}`
-        + (nama ? ` · Nama: ${nama}` : '');
+        + (nama ? ` · Nama: ${nama}` : '')
+        + (alamat ? ` · Alamat: ${alamat}` : '');
 
     $: totalPinjaman = rows.reduce((s:number, r:any) => s + Number(r.TOTAL_PINJAMAN ?? 0), 0);
     $: totalSisa     = rows.reduce((s:number, r:any) => s + Number(r.SISA_ANGSURAN ?? 0), 0);
@@ -37,6 +39,7 @@
         const params = new URLSearchParams({ status : status });
         if(marketing && marketing !== 'SEMUA') params.set('marketing', marketing);
         if(nama) params.set('nama', nama);
+        if(alamat) params.set('alamat', alamat);
 
         try {
             const doGet = await fetch(baseConfiguration.clientURL + 'Data-Macet/Print?' + params.toString(), { method : 'GET' });

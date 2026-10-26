@@ -41,7 +41,42 @@ test.describe('Dashboard', () => {
     test('marketing filter and date inputs are present', async ({ page }) => {
         await page.goto('/dashboard');
         await expect(page.locator('select').first()).toBeVisible();
-        await expect(page.locator('input[type="date"]')).toHaveCount(2);
+        // Scoped to the filter form: the detail drawer has its own date input
+        // (Tambah Kasbon), rendered even while the drawer is closed.
+        await expect(page.locator('form input[type="date"]#startDate, form input[type="date"]#endDate')).toHaveCount(2);
+    });
+
+    test('a kasbon-only row can be added to a loan and removed again', async ({ page }) => {
+        await page.goto('/dashboard');
+        await page.waitForLoadState('networkidle');
+        // The snapshot database has no loans in the default last-two-months range.
+        await page.locator('#startDate').fill('2000-01-01');
+        await page.getByRole('button', { name : 'Cari', exact : true }).click();
+        await page.getByRole('button', { name : /Detail/ }).first().click();
+        await expect(page.getByText('Tambah Kasbon (tanpa angsuran)')).toBeVisible();
+        await expect(page.locator('#kasbonSajaTanggal')).not.toHaveValue('');
+
+        const kasbonRows = page.getByRole('button', { name : 'Hapus baris kasbon' });
+        const before = await kasbonRows.count();
+
+        await page.locator('#kasbonSajaNominal').fill('250000');
+        await expect(page.locator('#kasbonSajaNominal')).toHaveValue('250.000');
+        await page.getByRole('button', { name : 'Tambah Kasbon', exact : true }).click();
+        await expect(kasbonRows).toHaveCount(before + 1);
+
+        // Clean up the snapshot database.
+        page.once('dialog', dialog => dialog.accept());
+        await kasbonRows.last().click();
+        await expect(kasbonRows).toHaveCount(before);
+    });
+});
+
+test.describe('Data Macet', () => {
+    test('has an address search next to the name search', async ({ page }) => {
+        await page.goto('/data-macet');
+        await page.waitForLoadState('networkidle');
+        await expect(page.getByPlaceholder('Cari nama nasabah')).toBeVisible();
+        await expect(page.getByPlaceholder('Cari alamat nasabah')).toBeVisible();
     });
 });
 

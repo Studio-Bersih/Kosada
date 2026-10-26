@@ -21,8 +21,8 @@
     | `form` is what the user is typing, `applied` is what the table is showing.
     | Nothing queries until the form is submitted; paging reads `applied`.
     */
-    let form    = { nama : '', marketing : 'SEMUA', status : 'Macet' };
-    let applied = { nama : '', marketing : 'SEMUA', status : 'Macet' };
+    let form    = { nama : '', alamat : '', marketing : 'SEMUA', status : 'Macet' };
+    let applied = { nama : '', alamat : '', marketing : 'SEMUA', status : 'Macet' };
 
     /*
     | Resolving a case is Administrator-only. The disabled button is the visible
@@ -70,6 +70,7 @@
             per_page : String(meta.per_page)
         });
         if(applied.nama) params.set('nama', applied.nama);
+        if(applied.alamat) params.set('alamat', applied.alamat);
         if(applied.marketing && applied.marketing !== 'SEMUA') params.set('marketing', applied.marketing);
 
         try {
@@ -244,7 +245,8 @@
     $: printHref = '/data-macet/print?' + new URLSearchParams({
         status    : applied.status,
         marketing : applied.marketing,
-        nama      : applied.nama
+        nama      : applied.nama,
+        alamat    : applied.alamat
     }).toString();
 
     $: totalTagihan = rows.reduce((s:number, r:any) => s + Number(r.TOTAL_TAGIHAN ?? 0), 0);
@@ -274,6 +276,13 @@
                 <Icon name="search" size={16} />
                 <input id="cariNama" type="search" bind:value={form.nama}
                        placeholder="Cari nama nasabah" class="grow min-w-0"/>
+            </label>
+
+            <!-- For the debt collectors, who work the list by area. -->
+            <label class="input input-bordered input-sm flex items-center gap-2 grow max-w-xs">
+                <Icon name="search" size={16} />
+                <input id="cariAlamat" type="search" bind:value={form.alamat}
+                       placeholder="Cari alamat nasabah" class="grow min-w-0"/>
             </label>
 
             <MarketingSelect bind:value={form.marketing} includeSemua class="select select-bordered select-sm" />
