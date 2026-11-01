@@ -279,7 +279,6 @@
                             <th>Kasbon</th>
                             <th>Angsuran</th>
                             <th>Progress Cicilan</th>
-                            <th>Tanggal Pinjaman</th>
                             <th>Total</th>
                             <th></th>
                         </tr>
@@ -306,7 +305,6 @@
                                 <td>{ rupiahFormatter.format(data.KASBON) }</td>
                                 <td>{ rupiahFormatter.format(data.CICILAN_TOTAL) }</td>
                                 <td>{ data.PROGRESS }</td>
-                                <td>{ data.CREATED_AT }</td>
                                 <td class="font-bold whitespace-nowrap">{ rupiahFormatter.format(data.TOTAL) }</td>
                                 <td>
                                     <button type="button" class="btn btn-xs btn-ghost" on:click={() => toggleHidden(data.ID, true)}>
@@ -322,7 +320,7 @@
                                 <td colspan="3">Total halaman ini ({newData.length} data)</td>
                                 <td>{ rupiahFormatter.format(totalKasbon) }</td>
                                 <td>{ rupiahFormatter.format(totalAngsuran) }</td>
-                                <td colspan="2"></td>
+                                <td></td>
                                 <td>{ rupiahFormatter.format(totalSemua) }</td>
                                 <td></td>
                             </tr>

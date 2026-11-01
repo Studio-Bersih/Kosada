@@ -37,7 +37,32 @@
         + ` · Marketing: ${marketing === 'SEMUA' ? 'Semua' : marketing}`
         + (nama ? ` · Nama: ${nama}` : '');
 
+    /*
+    | Text size for the sheet. Besar is the default because the office asked for
+    | larger text, and it is also the widest: it fits landscape A4, so the smaller
+    | sizes do too. The choice is remembered per browser.
+    */
+    const UKURAN = [
+        { label : 'Kecil',  pt : '10pt' },
+        { label : 'Sedang', pt : '12pt' },
+        { label : 'Besar',  pt : '14pt' }
+    ];
+    const UKURAN_KEY = 'kosada-laporan-ukuran';
+
+    let ukuran = 'Besar';
+    $: ukuranPt = UKURAN.find(u => u.label === ukuran)?.pt ?? '14pt';
+
+    function pilihUkuran(label:string){
+        ukuran = label;
+        try { localStorage.setItem(UKURAN_KEY, label); } catch {}
+    }
+
     onMount(async () => {
+        try {
+            const tersimpan = localStorage.getItem(UKURAN_KEY);
+            if(UKURAN.some(u => u.label === tersimpan)) ukuran = tersimpan as string;
+        } catch {}
+
         try {
             // Report/Print, not Report: the screen endpoint is paginated and a
             // printed monthly report must contain every row.
@@ -80,11 +105,25 @@
 
 <svelte:head><title>Laporan Bulanan — Koperasi Kosada</title></svelte:head>
 
-<div class="container mx-auto print-sheet">
+<div class="container mx-auto print-sheet report-sheet" style="--ukuran-tulisan: {ukuranPt}">
     <div class="card w-full bg-base-100 shadow-xl my-6">
         <div class="card-body">
 
-            <div class="flex justify-end no-print">
+            <div class="flex flex-wrap justify-end items-center gap-3 no-print">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">Ukuran tulisan</span>
+                    <div class="join">
+                        {#each UKURAN as pilihan}
+                            <button type="button"
+                                    class="join-item btn btn-sm"
+                                    class:btn-primary={ukuran === pilihan.label}
+                                    aria-pressed={ukuran === pilihan.label}
+                                    on:click={() => pilihUkuran(pilihan.label)}>
+                                {pilihan.label}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
                 <button type="button" on:click={() => window.print()} class="btn btn-primary w-48 my-2" disabled={isLoading || rows.length === 0}>
                     Cetak Halaman Ini
                 </button>
@@ -108,7 +147,6 @@
                             <th class="text-right">Kasbon</th>
                             <th class="text-right">Angsuran</th>
                             <th>Progress</th>
-                            <th>Tanggal Pinjaman</th>
                             <th class="text-right">Total</th>
                         </tr>
                     </thead>
@@ -121,7 +159,6 @@
                                 <td class="text-right">{rupiahFormatter.format(row.KASBON)}</td>
                                 <td class="text-right">{rupiahFormatter.format(row.CICILAN_TOTAL)}</td>
                                 <td>{row.PROGRESS}</td>
-                                <td>{row.CREATED_AT}</td>
                                 <td class="text-right font-bold">{rupiahFormatter.format(row.TOTAL)}</td>
                             </tr>
                         {/each}
@@ -131,7 +168,7 @@
                             <td colspan="3">Total ({rows.length} data)</td>
                             <td class="text-right">{rupiahFormatter.format(totalKasbon)}</td>
                             <td class="text-right">{rupiahFormatter.format(totalAngsuran)}</td>
-                            <td colspan="2"></td>
+                            <td></td>
                             <td class="text-right">{rupiahFormatter.format(totalSemua)}</td>
                         </tr>
                     </tfoot>
@@ -150,3 +187,25 @@
         </div>
     </div>
 </div>
+
+<style>
+    /*
+    | Landscape because the office asked for larger text: at 14pt the rupiah columns
+    | do not fit portrait A4, and the column they push off the page is Total.
+    */
+    @page laporan {
+        size: A4 landscape;
+        margin: 10mm;
+    }
+    .report-sheet {
+        page: laporan;
+    }
+    /*
+    | Not limited to print, so the choice is visible before printing. On the cells:
+    | table-sm sizes th and td itself, so a size on the table never reaches them.
+    */
+    .report-sheet th,
+    .report-sheet td {
+        font-size: var(--ukuran-tulisan);
+    }
+</style>
